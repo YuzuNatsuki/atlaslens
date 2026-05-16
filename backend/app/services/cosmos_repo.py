@@ -8,8 +8,10 @@ existing API surface keeps working unchanged.
 
 from __future__ import annotations
 
-from datetime import date as date_type, datetime
-from typing import Any, Iterable
+from collections.abc import Iterable
+from datetime import date as date_type
+from datetime import datetime
+from typing import Any
 
 from app.core.cosmos_client import get_container
 from app.models.schemas import (

@@ -14,13 +14,12 @@ Containers and partition keys:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from functools import lru_cache
-from typing import Iterable
 
 from azure.cosmos import ContainerProxy, CosmosClient, DatabaseProxy, PartitionKey
 
 from app.core.config import get_settings
-
 
 CONTAINER_DEFS: dict[str, str] = {
     "members": "/id",

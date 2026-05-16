@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.core.auth import AuthContext, get_auth_context, require_em
-from app.services.data_loader import DataLoader
 from app.services.daily_pulse import draft_daily_report, summarize_team_day
+from app.services.data_loader import DataLoader
 
 router = APIRouter()
 

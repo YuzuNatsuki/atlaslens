@@ -1,7 +1,7 @@
 """1on1 Companion (M3) API — prepare packets, draft minutes, persist records. EM only."""
 
-from datetime import datetime
 from datetime import date as date_type
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field

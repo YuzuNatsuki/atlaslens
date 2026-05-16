@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date as date_type, timedelta
+from datetime import date as date_type
+from datetime import timedelta
 
 from app.agents.reporter_agent import draft_member_daily, summarize_day
 from app.core.cache import cache

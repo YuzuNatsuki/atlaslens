@@ -49,3 +49,4 @@ logs/
 # Local data (generated dumps, never commit corp data)
 backend/.local_data/
 frontend/.local_data/
+data/atlascorp/credentials.yaml

@@ -6,9 +6,10 @@ Cosmos is not configured (local dev without a Cosmos account).
 
 from __future__ import annotations
 
-from datetime import date as date_type, datetime
+from collections.abc import Iterable
+from datetime import date as date_type
+from datetime import datetime
 from pathlib import Path
-from typing import Iterable
 
 import yaml
 

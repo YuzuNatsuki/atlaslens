@@ -7,13 +7,12 @@ No external SaaS (GitHub/Jira/Slack) integration in MVP.
 from __future__ import annotations
 
 from datetime import date, datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     EM = "em"
     TECH_LEAD = "tech_lead"
     SENIOR = "senior"

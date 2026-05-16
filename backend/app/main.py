@@ -1,12 +1,13 @@
 """FastAPI entrypoint for AtlasLens backend."""
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, members, one_on_ones, daily_pulse, simulator, goals, health, me
+from app.api import auth, daily_pulse, goals, health, me, members, one_on_ones, simulator
 from app.core.cosmos_client import cosmos_configured
 from app.core.tracing import instrument_fastapi, setup_tracing
 
@@ -39,8 +40,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 instrument_fastapi(app)
-
-import os
 
 # Allow localhost dev + any *.azurestaticapps.net (Static Web Apps default domain).
 # Override via CORS_ORIGINS env var if you need a tighter list later.

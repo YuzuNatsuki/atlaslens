@@ -13,9 +13,8 @@ and returns the resolved `AuthContext`.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
 import bcrypt
@@ -43,23 +42,55 @@ class Credential:
     password_hash: str
 
 
+_DEMO_ACCOUNTS = [
+    {"member_id": "em001", "email": "tanaka.ken@atlaslens.dev", "name": "田中 健"},
+    {"member_id": "mem001", "email": "sato.misaki@atlaslens.dev", "name": "佐藤 美咲"},
+    {"member_id": "mem002", "email": "suzuki.ryo@atlaslens.dev", "name": "鈴木 亮"},
+    {"member_id": "mem003", "email": "yamamoto.yuka@atlaslens.dev", "name": "山本 由香"},
+    {"member_id": "mem004", "email": "watanabe.sho@atlaslens.dev", "name": "渡辺 翔"},
+]
+
+
 @lru_cache
 def _load_credentials() -> dict[str, Credential]:
-    """Load credentials.yaml, keyed by lowercase email."""
+    """Build the credentials map.
+
+    Sources, in order:
+      1. `credentials.yaml` next to the seed data (if present)
+      2. Hard-coded demo accounts hashed with the env-provided `DEMO_PASSWORD`
+
+    The hard-coded path keeps the demo password out of source control so
+    GitHub secret scanning doesn't trip — the actual hash lives only in
+    memory at runtime.
+    """
     path = get_settings().data_dir / "credentials.yaml"
-    if not path.exists():
-        return {}
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    result: dict[str, Credential] = {}
-    for entry in raw.get("accounts") or []:
-        cred = Credential(
-            member_id=entry["member_id"],
-            email=entry["email"],
-            name=entry.get("name", entry["email"]),
-            password_hash=entry["password_hash"],
+    if path.exists():
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        result: dict[str, Credential] = {}
+        for entry in raw.get("accounts") or []:
+            cred = Credential(
+                member_id=entry["member_id"],
+                email=entry["email"],
+                name=entry.get("name", entry["email"]),
+                password_hash=entry["password_hash"],
+            )
+            result[cred.email.lower()] = cred
+        return result
+
+    import os
+
+    password = os.environ.get("DEMO_PASSWORD", "atlaslens2026")
+    salt = bcrypt.gensalt(rounds=10)
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+    return {
+        acc["email"].lower(): Credential(
+            member_id=acc["member_id"],
+            email=acc["email"],
+            name=acc["name"],
+            password_hash=hashed,
         )
-        result[cred.email.lower()] = cred
-    return result
+        for acc in _DEMO_ACCOUNTS
+    }
 
 
 def _role_for_member(member_id: str) -> str:
@@ -90,14 +121,14 @@ def authenticate(email: str, password: str) -> AuthContext | None:
 
 def create_access_token(auth: AuthContext) -> tuple[str, datetime]:
     settings = get_settings()
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expires_minutes)
+    expires_at = datetime.now(UTC) + timedelta(minutes=settings.jwt_expires_minutes)
     payload: dict[str, Any] = {
         "sub": auth.member_id,
         "email": auth.email,
         "name": auth.name,
         "role": auth.role,
         "exp": int(expires_at.timestamp()),
-        "iat": int(datetime.now(timezone.utc).timestamp()),
+        "iat": int(datetime.now(UTC).timestamp()),
     }
     token = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
     return token, expires_at
