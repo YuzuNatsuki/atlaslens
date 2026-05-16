@@ -1,0 +1,14 @@
+id: em001
+name: 田中 健
+role: em
+title: Engineering Manager
+joined_at: '2021-04-01'
+manager_id: null
+skills:
+- people management
+- backend
+- team building
+interests:
+- 登山
+- ジャズ
+bio: プラットフォームチームの EM。元バックエンドエンジニアで Go と Python。チーム規模拡大期。

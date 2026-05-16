@@ -1,0 +1,18 @@
+# メールアドレス → AtlasCorp member ID のマッピング。
+#
+# Static Web Apps の Entra ID ログインで取得した userDetails (メール) を
+# AtlasCorp の架空メンバーに割り当てる。マッチしないユーザは fallback_member を引く。
+#
+# 運用上は AAD グループや SCIM でやるべきだが、ハッカソンデモではこの YAML で十分。
+
+mappings:
+  # オーナーは EM 役
+  kenc2180@gmail.com: em001
+
+  # サンプル: 任意の人を Member 役にする場合
+  # alice@example.com: mem001
+  # bob@example.com: mem002
+
+# 上記いずれにもマッチしなかった認証済みユーザのデフォルト割当。
+# null にするとマッチしないユーザは 403。
+fallback_member: mem004

@@ -1,0 +1,132 @@
+"""Migrate the bundled file-based seed into Cosmos on first run.
+
+Idempotent: each container is seeded only if it is empty.
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+import yaml
+
+from app.core.config import get_settings
+from app.core.cosmos_client import count_items, ensure_all_containers
+from app.models.schemas import (
+    DailyReport,
+    Goal,
+    MeetingMinute,
+    MemberProfile,
+    OneOnOne,
+    Role,
+)
+from app.services import cosmos_repo
+from app.services.data_loader import (
+    _parse_daily_markdown,
+    _parse_meeting_markdown,
+    _parse_one_on_one_markdown,
+)
+
+log = logging.getLogger(__name__)
+
+
+def _data_dir() -> Path:
+    return get_settings().data_dir
+
+
+def _file_profiles() -> list[MemberProfile]:
+    profiles: list[MemberProfile] = []
+    members_dir = _data_dir() / "members"
+    if not members_dir.exists():
+        return profiles
+    for path in sorted(members_dir.glob("*.yaml")):
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw["role"] = Role(raw["role"])
+        profiles.append(MemberProfile(**raw))
+    return profiles
+
+
+def _file_goals(member_id: str) -> list[Goal]:
+    path = _data_dir() / "goals" / f"{member_id}.yaml"
+    if not path.exists():
+        return []
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or []
+    return [Goal(**item) for item in raw]
+
+
+def _file_daily(member_id: str) -> list[DailyReport]:
+    folder = _data_dir() / "daily_reports" / member_id
+    if not folder.exists():
+        return []
+    reports: list[DailyReport] = []
+    for path in sorted(folder.glob("*.md")):
+        r = _parse_daily_markdown(path, member_id)
+        if r is not None:
+            reports.append(r)
+    return reports
+
+
+def _file_one_on_ones(member_id: str) -> list[OneOnOne]:
+    folder = _data_dir() / "one_on_ones" / member_id
+    if not folder.exists():
+        return []
+    items: list[OneOnOne] = []
+    for path in sorted(folder.glob("*.md")):
+        o = _parse_one_on_one_markdown(path, member_id)
+        if o is not None:
+            items.append(o)
+    return items
+
+
+def _file_meetings() -> list[MeetingMinute]:
+    folder = _data_dir() / "meetings"
+    if not folder.exists():
+        return []
+    items: list[MeetingMinute] = []
+    for path in sorted(folder.glob("*.md")):
+        m = _parse_meeting_markdown(path)
+        if m is not None:
+            items.append(m)
+    return items
+
+
+def migrate_if_empty() -> dict[str, int]:
+    ensure_all_containers()
+    profiles = _file_profiles()
+    result: dict[str, int] = {}
+
+    if count_items("members") == 0 and profiles:
+        result["members"] = cosmos_repo.bulk_upsert_members(profiles)
+        log.info("seeded %d members", result["members"])
+
+    if count_items("goals") == 0:
+        all_goals: list[Goal] = []
+        for m in profiles:
+            all_goals.extend(_file_goals(m.id))
+        if all_goals:
+            result["goals"] = cosmos_repo.bulk_upsert_goals(all_goals)
+            log.info("seeded %d goals", result["goals"])
+
+    if count_items("daily_reports") == 0:
+        all_reports: list[DailyReport] = []
+        for m in profiles:
+            all_reports.extend(_file_daily(m.id))
+        if all_reports:
+            result["daily_reports"] = cosmos_repo.bulk_upsert_daily(all_reports)
+            log.info("seeded %d daily reports", result["daily_reports"])
+
+    if count_items("one_on_ones") == 0:
+        all_one_on_ones: list[OneOnOne] = []
+        for m in profiles:
+            all_one_on_ones.extend(_file_one_on_ones(m.id))
+        if all_one_on_ones:
+            result["one_on_ones"] = cosmos_repo.bulk_upsert_one_on_ones(all_one_on_ones)
+            log.info("seeded %d one-on-ones", result["one_on_ones"])
+
+    if count_items("meetings") == 0:
+        meetings = _file_meetings()
+        if meetings:
+            result["meetings"] = cosmos_repo.bulk_upsert_meetings(meetings)
+            log.info("seeded %d meetings", result["meetings"])
+
+    return result

@@ -1,0 +1,15 @@
+id: mem001
+name: 佐藤 美咲
+role: tech_lead
+title: Tech Lead, Platform
+joined_at: '2022-10-01'
+manager_id: em001
+skills:
+- sre
+- kubernetes
+- terraform
+- observability
+interests:
+- コーヒー焙煎
+- 推し活
+bio: SRE 出身のテックリード。プラットフォーム全体の信頼性とアーキの責任者。

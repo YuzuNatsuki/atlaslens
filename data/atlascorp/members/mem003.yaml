@@ -1,0 +1,15 @@
+id: mem003
+name: 山本 由香
+role: mid
+title: Frontend Engineer
+joined_at: '2024-10-01'
+manager_id: em001
+skills:
+- react
+- typescript
+- design systems
+- accessibility
+interests:
+- イラスト
+- 猫
+bio: フロントエンドのデザインシステム担当。UI コンポーネントの統一を進めている。

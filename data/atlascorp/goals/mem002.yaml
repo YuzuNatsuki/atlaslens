@@ -1,0 +1,10 @@
+- id: g-mem002-1
+  period: 2026-Q2
+  objective: 決済 API の信頼性向上
+  key_results:
+  - p99 レイテンシを 350ms → 200ms
+  - エラーレートを 0.5% → 0.1%
+  - リカバリ Runbook を全障害ケースで整備
+  progress_pct: 60
+  status: on_track
+  member_id: mem002

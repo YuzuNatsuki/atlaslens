@@ -1,0 +1,10 @@
+- id: g-mem003-1
+  period: 2026-Q2
+  objective: デザインシステムをチーム全体に展開
+  key_results:
+  - コアコンポーネント 30 種を Storybook に公開
+  - プロダクト 3 つで採用率 70%
+  - アクセシビリティ AA 準拠率 90%
+  progress_pct: 50
+  status: on_track
+  member_id: mem003

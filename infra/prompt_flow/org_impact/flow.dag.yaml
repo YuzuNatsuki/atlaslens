@@ -1,0 +1,110 @@
+# AtlasLens — Org Impact Simulator as a Prompt Flow DAG.
+#
+# Inputs (single JSON payload via prepare_context):
+#   change            — proposed structural change (kind, description, parameters)
+#   members           — list of {id, name, role, manager_id, skills}
+#   collaboration_pairs — list of {a, b, shared_meetings_30d}
+#   shared_skills     — map of skill name -> [member ids with that skill]
+#
+# Stages:
+#   1. prepare_context (python)   — builds a compact context string for the LLM nodes
+#   2. comms_impact     (llm)     — how the change affects communication paths
+#   3. knowledge_risks  (llm)     — concentration / single-owner risks after the change
+#   4. workload_shifts  (llm)     — who absorbs more / less work
+#   5. synthesize       (llm)     — combines the three into the final JSON
+#   6. parse_result     (python)  — strips ```json fences, loads as dict
+
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+
+inputs:
+  change:
+    type: object
+  members:
+    type: list
+  collaboration_pairs:
+    type: list
+  shared_skills:
+    type: object
+
+outputs:
+  result:
+    type: object
+    reference: ${parse_result.output}
+
+nodes:
+  - name: prepare_context
+    type: python
+    source:
+      type: code
+      path: prepare_context.py
+    inputs:
+      change: ${inputs.change}
+      members: ${inputs.members}
+      collaboration_pairs: ${inputs.collaboration_pairs}
+      shared_skills: ${inputs.shared_skills}
+
+  - name: comms_impact
+    type: llm
+    source:
+      type: code
+      path: comms_impact.jinja2
+    inputs:
+      deployment_name: gpt-4o
+      max_tokens: 600
+      temperature: 0.3
+      context: ${prepare_context.output}
+    connection: atlaslens_aoai
+    api: chat
+
+  - name: knowledge_risks
+    type: llm
+    source:
+      type: code
+      path: knowledge_risks.jinja2
+    inputs:
+      deployment_name: gpt-4o
+      max_tokens: 600
+      temperature: 0.3
+      context: ${prepare_context.output}
+    connection: atlaslens_aoai
+    api: chat
+
+  - name: workload_shifts
+    type: llm
+    source:
+      type: code
+      path: workload_shifts.jinja2
+    inputs:
+      deployment_name: gpt-4o
+      max_tokens: 500
+      temperature: 0.3
+      context: ${prepare_context.output}
+    connection: atlaslens_aoai
+    api: chat
+
+  - name: synthesize
+    type: llm
+    source:
+      type: code
+      path: synthesize.jinja2
+    inputs:
+      deployment_name: gpt-4o
+      max_tokens: 600
+      temperature: 0.3
+      context: ${prepare_context.output}
+      comms: ${comms_impact.output}
+      knowledge: ${knowledge_risks.output}
+      workload: ${workload_shifts.output}
+    connection: atlaslens_aoai
+    api: chat
+
+  - name: parse_result
+    type: python
+    source:
+      type: code
+      path: parse_result.py
+    inputs:
+      comms_raw: ${comms_impact.output}
+      knowledge_raw: ${knowledge_risks.output}
+      workload_raw: ${workload_shifts.output}
+      synthesis_raw: ${synthesize.output}

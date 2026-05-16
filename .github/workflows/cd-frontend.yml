@@ -1,0 +1,83 @@
+name: cd-frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/cd-frontend.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: cd-frontend
+  cancel-in-progress: false
+
+env:
+  RG: atlaslens-rg
+  SWA: atlaslens-web
+  CONTAINER_APP: atlaslens-backend
+
+jobs:
+  build-and-deploy:
+    name: build + deploy to SWA
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Discover backend URL
+        id: backend
+        run: |
+          URL=$(az containerapp show -g "${{ env.RG }}" -n "${{ env.CONTAINER_APP }}" --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "url=https://$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Write VITE_API_BASE
+        working-directory: frontend
+        run: |
+          echo "VITE_API_BASE=${{ steps.backend.outputs.url }}" > .env.production
+
+      - name: Install
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Approve esbuild build
+        working-directory: frontend
+        run: printf 'y\n' | pnpm approve-builds esbuild || true
+
+      - name: Build
+        working-directory: frontend
+        run: pnpm build
+
+      - name: Fetch SWA deploy token
+        id: swa
+        run: |
+          TOKEN=$(az staticwebapp secrets list -g "${{ env.RG }}" -n "${{ env.SWA }}" --query "properties.apiKey" -o tsv)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.token }}
+          action: upload
+          app_location: frontend/dist
+          skip_app_build: true
+          skip_api_build: true

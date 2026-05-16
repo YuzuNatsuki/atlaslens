@@ -1,0 +1,10 @@
+- id: g-mem001-1
+  period: 2026-Q2
+  objective: プラットフォームの SLO を導入し信頼性指標を可視化
+  key_results:
+  - 主要 3 サービスで SLO を定義しダッシュボード化
+  - アラート過多を 40% 削減 (ノイズ削減)
+  - オンコールローテーションを 4 名で確立
+  progress_pct: 35
+  status: at_risk
+  member_id: mem001

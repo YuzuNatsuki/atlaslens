@@ -1,0 +1,10 @@
+- id: g-em001-1
+  period: 2026-Q2
+  objective: チームの 1on1 サイクルとオンボーディング体験を改善する
+  key_results:
+  - 全メンバーで隔週 1on1 を 90% 以上開催
+  - 新卒メンバーのオンボーディング完了率を 6 月末までに 80%
+  - 障害ポストモーテムの実施率を 100%(チーム障害)
+  progress_pct: 40
+  status: on_track
+  member_id: em001

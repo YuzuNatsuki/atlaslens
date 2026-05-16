@@ -1,0 +1,15 @@
+id: mem002
+name: 鈴木 亮
+role: senior
+title: Senior Backend Engineer
+joined_at: '2023-04-01'
+manager_id: em001
+skills:
+- go
+- grpc
+- postgres
+- distributed systems
+interests:
+- ボードゲーム
+- ランニング
+bio: バックエンドの主力。決済とユーザー基盤の API を担当。

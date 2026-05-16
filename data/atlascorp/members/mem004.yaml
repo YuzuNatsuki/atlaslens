@@ -1,0 +1,14 @@
+id: mem004
+name: 渡辺 翔
+role: junior
+title: Software Engineer (New Grad)
+joined_at: '2025-11-01'
+manager_id: em001
+skills:
+- python
+- fastapi
+- react
+interests:
+- 音楽制作
+- サウナ
+bio: 新卒。オンボーディング途中。バックエンドとフロントエンドの両方に挑戦中。
