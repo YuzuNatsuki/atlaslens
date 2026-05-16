@@ -1,3 +1,10 @@
+terraform {
+  required_providers {
+    azurerm = { source = "hashicorp/azurerm", version = "~> 4.10" }
+    azapi   = { source = "Azure/azapi", version = "~> 2.0" }
+  }
+}
+
 variable "name_prefix" { type = string }
 variable "location" { type = string }
 variable "resource_group_name" { type = string }
@@ -8,11 +15,11 @@ variable "tags" { type = map(string) }
 resource "azurerm_cognitive_account" "foundry" {
   name                          = "${var.name_prefix}-foundry"
   location                      = var.location
-  resource_group_name            = var.resource_group_name
-  kind                           = "AIServices"
-  sku_name                       = "S0"
-  custom_subdomain_name          = "${var.name_prefix}-foundry"
-  public_network_access_enabled  = true
+  resource_group_name           = var.resource_group_name
+  kind                          = "AIServices"
+  sku_name                      = "S0"
+  custom_subdomain_name         = "${var.name_prefix}-foundry"
+  public_network_access_enabled = true
 
   identity {
     type = "SystemAssigned"

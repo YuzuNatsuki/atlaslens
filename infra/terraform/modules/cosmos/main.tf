@@ -36,12 +36,12 @@ resource "azurerm_cosmosdb_sql_database" "main" {
 
 locals {
   containers = {
-    members        = "/id"
-    goals          = "/member_id"
-    daily_reports  = "/member_id"
-    one_on_ones    = "/member_id"
-    meetings       = "/id"
-    prep_notes     = "/member_id"
+    members       = "/id"
+    goals         = "/member_id"
+    daily_reports = "/member_id"
+    one_on_ones   = "/member_id"
+    meetings      = "/id"
+    prep_notes    = "/member_id"
   }
 }
 

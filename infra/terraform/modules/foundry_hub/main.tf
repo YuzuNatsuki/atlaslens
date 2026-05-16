@@ -1,3 +1,10 @@
+terraform {
+  required_providers {
+    azurerm = { source = "hashicorp/azurerm", version = "~> 4.10" }
+    azapi   = { source = "Azure/azapi", version = "~> 2.0" }
+  }
+}
+
 variable "name_prefix" { type = string }
 variable "location" { type = string }
 variable "resource_group_name" { type = string }
@@ -70,4 +77,3 @@ resource "azapi_resource" "aoai_connection" {
 
 output "hub_id" { value = azurerm_ai_foundry.hub.id }
 output "project_id" { value = azurerm_ai_foundry_project.project.id }
-output "project_discovery_url" { value = azurerm_ai_foundry_project.project.discovery_url }

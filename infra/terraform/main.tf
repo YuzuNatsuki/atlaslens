@@ -37,13 +37,13 @@ module "storage" {
 }
 
 module "keyvault" {
-  source                  = "./modules/keyvault"
-  name_prefix             = var.name_prefix
-  sub_suffix              = local.sub_suffix
-  location                = azurerm_resource_group.main.location
-  resource_group_name     = azurerm_resource_group.main.name
-  tenant_id               = data.azurerm_client_config.current.tenant_id
-  tags                    = var.tags
+  source              = "./modules/keyvault"
+  name_prefix         = var.name_prefix
+  sub_suffix          = local.sub_suffix
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  tags                = var.tags
 }
 
 module "foundry" {
@@ -57,18 +57,18 @@ module "foundry" {
 }
 
 module "foundry_hub" {
-  source                       = "./modules/foundry_hub"
-  name_prefix                  = var.name_prefix
-  location                     = azurerm_resource_group.main.location
-  resource_group_name          = azurerm_resource_group.main.name
-  storage_account_id           = module.storage.foundry_storage_id
-  key_vault_id                 = module.keyvault.key_vault_id
-  application_insights_id      = module.observability.application_insights_id
-  aoai_connection_name         = "atlaslens_aoai"
-  aoai_endpoint                = module.foundry.openai_endpoint
-  aoai_api_key                 = module.foundry.primary_key
-  aoai_resource_id             = module.foundry.account_id
-  tags                         = var.tags
+  source                  = "./modules/foundry_hub"
+  name_prefix             = var.name_prefix
+  location                = azurerm_resource_group.main.location
+  resource_group_name     = azurerm_resource_group.main.name
+  storage_account_id      = module.storage.foundry_storage_id
+  key_vault_id            = module.keyvault.key_vault_id
+  application_insights_id = module.observability.application_insights_id
+  aoai_connection_name    = "atlaslens_aoai"
+  aoai_endpoint           = module.foundry.openai_endpoint
+  aoai_api_key            = module.foundry.primary_key
+  aoai_resource_id        = module.foundry.account_id
+  tags                    = var.tags
 }
 
 module "acr" {
@@ -80,24 +80,24 @@ module "acr" {
 }
 
 module "container_app" {
-  source                                = "./modules/container_app"
-  name_prefix                           = var.name_prefix
-  location                              = azurerm_resource_group.main.location
-  resource_group_name                   = azurerm_resource_group.main.name
-  log_analytics_workspace_id            = module.observability.log_analytics_id
+  source                                 = "./modules/container_app"
+  name_prefix                            = var.name_prefix
+  location                               = azurerm_resource_group.main.location
+  resource_group_name                    = azurerm_resource_group.main.name
+  log_analytics_workspace_id             = module.observability.log_analytics_id
   application_insights_connection_string = module.observability.application_insights_connection_string
-  image_tag                             = var.backend_image_tag
+  image_tag                              = var.backend_image_tag
 
   registry_login_server = module.acr.login_server
   registry_username     = module.acr.admin_username
   registry_password     = module.acr.admin_password
 
-  openai_endpoint        = module.foundry.openai_endpoint
-  openai_api_key         = module.foundry.primary_key
-  cosmos_endpoint        = module.cosmos.endpoint
-  cosmos_key             = module.cosmos.primary_key
-  jwt_secret             = var.jwt_secret
-  tags                   = var.tags
+  openai_endpoint = module.foundry.openai_endpoint
+  openai_api_key  = module.foundry.primary_key
+  cosmos_endpoint = module.cosmos.endpoint
+  cosmos_key      = module.cosmos.primary_key
+  jwt_secret      = var.jwt_secret
+  tags            = var.tags
 }
 
 module "static_web_app" {

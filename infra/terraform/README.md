@@ -91,3 +91,25 @@ it.
 
 All workflows authenticate to Azure via Workload Identity Federation — no
 service-principal secrets in GitHub.
+
+## Current import drift
+
+First `terraform plan` against the existing AtlasLens resources reports:
+
+```
+Plan: 24 to import, 4 to add, 13 to change, 4 to destroy.
+```
+
+This is expected — the live resources were initially created via `az` scripts
+and the Terraform definitions encode the *target* configuration. **Do not run
+`terraform apply` until each `change/destroy` has been reviewed.** Typical
+drift sources:
+
+- CORS rules on the AML Hub storage account
+- Static Web App SKU was upgraded then downgraded during testing
+- Container App revision suffix / scale rule defaults
+- Cognitive Service `gpt-4o` capacity (`30K` vs Terraform default)
+
+Recommended workflow: narrow `infra/terraform/imports.tf` to one resource at a
+time, run `plan`, adjust the module to match observed state where the live
+config is intentional, and only then merge.

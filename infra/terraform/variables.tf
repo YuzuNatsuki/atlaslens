@@ -31,9 +31,9 @@ variable "tags" {
   description = "Tags applied to every resource"
   type        = map(string)
   default = {
-    project     = "atlaslens"
-    hackathon   = "microsoft-agent-hackathon-2026"
-    managed_by  = "terraform"
+    project    = "atlaslens"
+    hackathon  = "microsoft-agent-hackathon-2026"
+    managed_by = "terraform"
   }
 }
 

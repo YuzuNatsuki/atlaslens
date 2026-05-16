@@ -4,6 +4,53 @@
 
 Microsoft Agent Hackathon 2026 powered by Tokyo Electron Device への応募作品。
 
+- **Frontend**: https://orange-pond-02df6f200.7.azurestaticapps.net
+- **Backend**: https://atlaslens-backend.politeisland-f552e471.japaneast.azurecontainerapps.io
+- **Repo**: https://github.com/YuzuNatsuki/atlaslens
+
+## デモアカウント
+
+5 アカウントとも初期パスワード `atlaslens2026`:
+
+| メール | ロール |
+|---|---|
+| `tanaka.ken@atlaslens.dev` | EM (田中 健) |
+| `sato.misaki@atlaslens.dev` | Tech Lead (佐藤 美咲) |
+| `suzuki.ryo@atlaslens.dev` | Senior (鈴木 亮) |
+| `yamamoto.yuka@atlaslens.dev` | Mid (山本 由香) |
+| `watanabe.sho@atlaslens.dev` | Junior (渡辺 翔) |
+
+## Azure 構成
+
+```
+atlaslens-rg @ japaneast
+├── atlaslens-foundry          AIServices (Foundry) + projects/atlaslens
+│   └── gpt-4o (GlobalStandard) + text-embedding-3-large
+├── atlaslens-foundry-hub      AML Hub (Prompt Flow ホスト)
+├── atlaslens-foundry-proj     AML Project + atlaslens_aoai connection
+├── atlaslens-cosmos           Cosmos DB Serverless (6 containers)
+├── atlaslensacrb6e5a1         Container Registry
+├── atlaslens-logs             Log Analytics
+├── atlaslens-appi             Application Insights (OTel 集約)
+├── atlaslens-env              Container Apps env
+├── atlaslens-backend          Container App (FastAPI + Prompt Flow runtime)
+└── atlaslens-web              Static Web App (React)
+
+atlaslens-tfstate-rg @ japaneast
+└── atlaslenstfstateb6e5a1     Terraform remote state (Storage Account)
+```
+
+## CI/CD パイプライン (GitHub Actions)
+
+| Workflow | Trigger | Does |
+|---|---|---|
+| `ci.yml` | PR | backend lint + tests, frontend build, `terraform plan` |
+| `cd-infra.yml` | push to main, `infra/terraform/**` | `terraform apply` (production environment) |
+| `cd-backend.yml` | push to main, `backend/**` / `data/**` / `infra/prompt_flow/**` | `az acr build` + `containerapp update` |
+| `cd-frontend.yml` | push to main, `frontend/**` | `pnpm build` + Static Web Apps deploy |
+
+すべて **Workload Identity Federation (OIDC)** で Azure に認証。GitHub に保存されている secret は Azure 接続情報のみで、有効期限・自動失効ありの短命トークン。
+
 ## 概要
 
 エンジニアリングマネージャー（EM）の業務を 5 つのモジュールで支援する Agentic AI プラットフォーム。
