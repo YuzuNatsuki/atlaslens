@@ -50,3 +50,4 @@ logs/
 backend/.local_data/
 frontend/.local_data/
 data/atlascorp/credentials.yaml
+frontend/.vite/
