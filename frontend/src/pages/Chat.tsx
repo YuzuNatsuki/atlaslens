@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { Send, Trash2 } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Send, Trash2, Wand2 } from "lucide-react";
 
 import { api, type ChatMessage } from "@/lib/api";
 
@@ -11,13 +11,25 @@ const STARTERS = [
   "今週のチームの健康状態を 100 字で要約してください",
 ];
 
+const CUSTOM_KEY = "custom";
+
 export default function ChatPage() {
+  const stylesQ = useQuery({ queryKey: ["chat-styles"], queryFn: api.chatStyles });
+  const presets = stylesQ.data?.styles ?? [];
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
+  const [style, setStyle] = useState<string>("standard");
+  const [customInstructions, setCustomInstructions] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const sendM = useMutation({
-    mutationFn: (history: ChatMessage[]) => api.chat(history),
+    mutationFn: (history: ChatMessage[]) =>
+      api.chat({
+        messages: history,
+        style,
+        style_instructions: style === CUSTOM_KEY ? customInstructions : undefined,
+      }),
     onSuccess: (data) => {
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
     },
@@ -30,6 +42,10 @@ export default function ChatPage() {
   const send = (text: string) => {
     const content = text.trim();
     if (!content || sendM.isPending) return;
+    if (style === CUSTOM_KEY && !customInstructions.trim()) {
+      // Refuse silently — user must give custom instructions.
+      return;
+    }
     const next: ChatMessage[] = [...messages, { role: "user", content }];
     setMessages(next);
     setDraft("");
@@ -60,10 +76,49 @@ export default function ChatPage() {
         </button>
       </header>
 
+      <section className="card">
+        <h2 className="text-xs text-slate-500 mb-2 flex items-center gap-1">
+          <Wand2 size={12} /> 回答スタイル
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {presets.map((p) => (
+            <StyleChip
+              key={p.key}
+              label={p.label}
+              active={style === p.key}
+              onClick={() => setStyle(p.key)}
+            />
+          ))}
+          <StyleChip
+            label="カスタム"
+            active={style === CUSTOM_KEY}
+            onClick={() => setStyle(CUSTOM_KEY)}
+          />
+        </div>
+        {style === CUSTOM_KEY && (
+          <div className="mt-3">
+            <label className="text-xs text-slate-500">
+              カスタム指示（口調・長さ・出力フォーマットなど）
+            </label>
+            <textarea
+              value={customInstructions}
+              onChange={(e) => setCustomInstructions(e.target.value)}
+              placeholder={
+                "例: 全て表形式 (Markdown) で。1 行目に結論、2 行目に根拠を必ず書く。\n或いは: コードレビュアー口調で、率直かつ歯切れよく。"
+              }
+              className="mt-1 w-full h-24 border border-slate-300 rounded p-2 text-sm font-mono"
+            />
+            <p className="text-xs text-amber-700 mt-1">
+              ※ カスタム指示を入力してから質問してください。
+            </p>
+          </div>
+        )}
+      </section>
+
       <div
         ref={scrollRef}
         className="card overflow-y-auto"
-        style={{ minHeight: 360, maxHeight: "calc(100vh - 360px)" }}
+        style={{ minHeight: 360, maxHeight: "calc(100vh - 480px)" }}
       >
         {messages.length === 0 && !sendM.isPending && (
           <div>
@@ -119,12 +174,39 @@ export default function ChatPage() {
         <button
           type="submit"
           className="btn-primary self-end flex items-center gap-1"
-          disabled={!draft.trim() || sendM.isPending}
+          disabled={
+            !draft.trim() ||
+            sendM.isPending ||
+            (style === CUSTOM_KEY && !customInstructions.trim())
+          }
         >
           <Send size={14} /> 送信
         </button>
       </form>
     </div>
+  );
+}
+
+function StyleChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-xs border transition ${
+        active
+          ? "bg-brand text-white border-brand"
+          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 

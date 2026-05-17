@@ -24,11 +24,17 @@ export const api = {
     }),
   alignment: () => authedFetch<AlignmentReport>("/api/goals/alignment"),
   teamHealth: () => authedFetch<TeamHealth>("/api/health/team"),
-  chat: (messages: ChatMessage[]) =>
-    authedFetch<{ reply: string }>("/api/chat", {
+  chat: (input: {
+    messages: ChatMessage[];
+    style?: string;
+    style_instructions?: string;
+  }) =>
+    authedFetch<{ reply: string; style?: string }>("/api/chat", {
       method: "POST",
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify(input),
     }),
+  chatStyles: () =>
+    authedFetch<{ styles: { key: string; label: string }[] }>("/api/chat/styles"),
 };
 
 export interface ChatMessage {

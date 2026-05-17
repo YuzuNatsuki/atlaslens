@@ -1,4 +1,9 @@
-"""Chat assistant — EM-only. Conversational, grounded on AtlasCorp data."""
+"""Chat assistant — EM-only. Conversational, grounded on AtlasCorp data.
+
+The reply style is steerable: callers pick a preset (`standard`, `concise`,
+`coaching`, `casual`, `analytical`, `bullet`) or send a free-form `style_instructions`
+string to write their own persona.
+"""
 
 from __future__ import annotations
 
@@ -16,23 +21,70 @@ class ChatMessage(BaseModel):
     content: str
 
 
-SYSTEM_PROMPT = """\
+BASE_PROMPT = """\
 あなたは AtlasLens の EM 用 AI アシスタントです。Microsoft Azure 上の Foundry で
 動作し、AtlasCorp というチーム (5 名) の最新データ (プロフィール / OKR / 日報 /
 1on1 / 議事録) にアクセスできます。
 
-EM（マネージャー）からの質問に、以下を守って答えてください：
-
-- 日本語の自然な敬体（ですます調）で、簡潔に。長文は避け、要点を箇条書きに。
-- 推測ではなく与えられたデータを根拠にする。出典は member_id / 日付で示す。
+守ること（スタイルにかかわらず常に有効）：
+- 推測ではなく与えられたデータを根拠にする。出典は member_id / 日付で示せると良い。
 - メンバーの感情や性格は推測しない。観測可能な行動だけ言及する。
-- 比較や評価をするときは、攻撃的でない言い回しを選ぶ
-  （例: ×「Aさんは遅れている」→ ○「Aさんの目標進捗は X% で、計画より少し
-  ゆっくりに見えます」）。
+- 評価ではなく支援を意図する。攻撃的・断定的な言い回しは避ける。
 - 情報が足りないときは「データには含まれていません」と素直に伝え、追加で見るべき
   ファイル/メンバーを提案する。
-- 1on1 や評価に役立つフォローアップ質問があれば最後に 1–2 個だけ添える。
+- 日本語の自然な敬体で書く。
 """
+
+STYLE_PRESETS: dict[str, dict[str, str | float]] = {
+    "standard": {
+        "label": "標準（バランス型）",
+        "instructions": (
+            "回答スタイルは『標準』。見出しや箇条書きを適度に使い、要点を整理しつつ"
+            "短めの説明を添えてください。最後に 1〜2 個のフォローアップ質問があれば添える。"
+        ),
+        "temperature": 0.4,
+    },
+    "concise": {
+        "label": "短く一言",
+        "instructions": (
+            "回答スタイルは『短く一言』。1〜3 文の平文だけで答えてください。"
+            "見出し、箇条書き、絵文字は使わない。フォローアップ質問は付けない。"
+        ),
+        "temperature": 0.3,
+    },
+    "bullet": {
+        "label": "箇条書きのみ",
+        "instructions": (
+            "回答スタイルは『箇条書きのみ』。前置きや要約は書かず、要点を箇条書きだけで"
+            "並べる。各項目は 30 字以内、最大 5 件。"
+        ),
+        "temperature": 0.3,
+    },
+    "coaching": {
+        "label": "コーチング（質問を返す）",
+        "instructions": (
+            "回答スタイルは『コーチング』。直接的な答えを 1 つに絞ったら、すぐに EM 自身に"
+            "考えてもらう問いを 2〜3 個返してください。答えは決めつけず、選択肢を示す。"
+        ),
+        "temperature": 0.6,
+    },
+    "analytical": {
+        "label": "分析レポート（出典付き）",
+        "instructions": (
+            "回答スタイルは『分析レポート』。データに基づく結論を最初に書き、続けて根拠"
+            "（日付・出典 id）を明示する。観察された事実と推論を明確に分けて書く。"
+        ),
+        "temperature": 0.2,
+    },
+    "casual": {
+        "label": "カジュアル（雑談調）",
+        "instructions": (
+            "回答スタイルは『カジュアル』。Slack DM のように肩肘張らない言い回しで答える。"
+            "短め・親しみやすく、ただし敬語は崩しすぎない。絵文字は最大 1 個まで。"
+        ),
+        "temperature": 0.7,
+    },
+}
 
 
 def _context_snapshot(loader: DataLoader) -> str:
@@ -93,16 +145,40 @@ def _context_snapshot(loader: DataLoader) -> str:
     return json.dumps(snapshot, ensure_ascii=False, default=str)
 
 
+def _resolve_style(
+    style: str | None,
+    style_instructions: str | None,
+) -> tuple[str, float]:
+    """Pick the style addendum + temperature based on caller hints."""
+    if style == "custom" and style_instructions:
+        return (
+            f"回答スタイルは『カスタム』。EM 自身が指定した指示に従ってください：\n{style_instructions.strip()}",
+            0.5,
+        )
+    preset = STYLE_PRESETS.get(style or "standard", STYLE_PRESETS["standard"])
+    instructions = str(preset.get("instructions", ""))
+    temperature = float(preset.get("temperature", 0.4))
+    if style_instructions:
+        instructions += (
+            "\n\n追加で次の指示も加味してください（プリセットと矛盾する場合はこちらを優先）：\n"
+            + style_instructions.strip()
+        )
+    return instructions, temperature
+
+
 async def chat_with_em(
     history: list[ChatMessage],
     *,
     em_member_id: str,
+    style: str | None = "standard",
+    style_instructions: str | None = None,
 ) -> str:
     loader = DataLoader()
     context_blob = _context_snapshot(loader)
+    style_addendum, temperature = _resolve_style(style, style_instructions)
 
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": BASE_PROMPT + "\n\n" + style_addendum},
         {
             "role": "system",
             "content": (
@@ -117,6 +193,14 @@ async def chat_with_em(
 
     return await chat_complete(
         messages=messages,
-        temperature=0.4,
+        temperature=temperature,
         max_tokens=900,
     )
+
+
+def list_style_presets() -> list[dict[str, str]]:
+    """Return preset metadata for the frontend's style picker."""
+    return [
+        {"key": key, "label": str(preset.get("label", key))}
+        for key, preset in STYLE_PRESETS.items()
+    ]
