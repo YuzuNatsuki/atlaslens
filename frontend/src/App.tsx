@@ -10,6 +10,7 @@ import MemberDetail from "./pages/MemberDetail";
 import OneOnOnePage from "./pages/OneOnOne";
 import SimulatorPage from "./pages/Simulator";
 import DailyPulsePage from "./pages/DailyPulse";
+import ChatPage from "./pages/Chat";
 
 import MyDashboard from "./pages/me/MyDashboard";
 import MyGoals from "./pages/me/MyGoals";
@@ -20,6 +21,7 @@ const emNav = [
   { to: "/", label: "ダッシュボード" },
   { to: "/daily-pulse", label: "Daily Pulse" },
   { to: "/simulator", label: "Org Simulator" },
+  { to: "/chat", label: "チャット" },
 ];
 
 const memberNav = [
@@ -60,6 +62,7 @@ function EmRoutes() {
       <Route path="/one-on-ones/:memberId" element={<OneOnOnePage />} />
       <Route path="/simulator" element={<SimulatorPage />} />
       <Route path="/daily-pulse" element={<DailyPulsePage />} />
+      <Route path="/chat" element={<ChatPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

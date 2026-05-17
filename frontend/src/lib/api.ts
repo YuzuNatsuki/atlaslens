@@ -24,7 +24,17 @@ export const api = {
     }),
   alignment: () => authedFetch<AlignmentReport>("/api/goals/alignment"),
   teamHealth: () => authedFetch<TeamHealth>("/api/health/team"),
+  chat: (messages: ChatMessage[]) =>
+    authedFetch<{ reply: string }>("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ messages }),
+    }),
 };
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
 // ---- types ----
 export interface MemberSummary {

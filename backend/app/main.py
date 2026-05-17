@@ -7,7 +7,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, daily_pulse, goals, health, me, members, one_on_ones, simulator
+from app.api import (
+    auth,
+    chat,
+    daily_pulse,
+    goals,
+    health,
+    me,
+    members,
+    one_on_ones,
+    simulator,
+)
 from app.core.cosmos_client import cosmos_configured
 from app.core.tracing import instrument_fastapi, setup_tracing
 
@@ -68,6 +78,7 @@ app.include_router(daily_pulse.router, prefix="/api/daily-pulse", tags=["daily-p
 app.include_router(simulator.router, prefix="/api/simulator", tags=["simulator"])
 app.include_router(goals.router, prefix="/api/goals", tags=["goals"])
 app.include_router(health.router, prefix="/api/health", tags=["health"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 
 @app.get("/")

@@ -7,11 +7,24 @@ import json
 from app.core.azure_clients import chat_complete
 
 DAILY_DRAFT_SYSTEM_PROMPT = """\
-You are AtlasLens "Reporter" — drafting a daily report for a team member.
-Use the member's stated bullet hints plus the past few days of reports for
-context. Output JSON with: yesterday, today, blockers, suggested_mood (1-5).
-Keep each section to 2-4 short bullet points, factual and concrete.
-Output Japanese.
+あなたは AtlasLens の "Reporter" です。本人のメモと直近数日の日報をもとに、
+今日の日報の下書きを作ります。
+
+以下の JSON 形式で返してください。日本のチームで自然な日報の書き方に合わせ、
+箇条書きベース、敬体（〜しました／〜します）。
+
+{
+  "yesterday": "<200字以内・昨日やったことを箇条書き調で>",
+  "today": "<200字以内・今日やることを箇条書き調で>",
+  "blockers": "<200字以内・困りごと。なければ空文字列>",
+  "suggested_mood": <1〜5 の整数 / 不明なら null>
+}
+
+ルール：
+- 各セクションは 2〜4 個の短い項目に絞る。
+- 「〜だった」「〜した」のような客観的な書き方。誇張は避ける。
+- ブロッカーは事実だけ。原因の決めつけはしない。
+- 出力は JSON のみ。
 """
 
 
@@ -45,21 +58,30 @@ async def draft_member_daily(
 
 
 TEAM_SUMMARY_SYSTEM_PROMPT = """\
-You are AtlasLens "Reporter" producing an EM-facing summary of one day of team
-daily reports. Return a strict JSON object — exact keys, Japanese values:
+あなたは AtlasLens の "Reporter" です。EM が朝会前に 30 秒でチームの状況を
+つかめるよう、1 日分の日報を要約します。
+
+以下の JSON 形式で返してください。すべて日本語の敬体で、簡潔に。
 
 {
-  "tldr": ["<<= 80 chars Japanese bullet>", ...],
+  "tldr": ["<80字以内・今日の見どころを 3 つ>", ...],
   "highlights": {
-    "<member name>": "<<= 100 chars Japanese summary of their day>"
+    "<メンバー名>": "<100字以内・今日の主な動き>"
   },
   "blockers_to_surface": {
-    "<member name>": "<<= 100 chars Japanese blocker description>"
+    "<メンバー名>": "<100字以内・気がかりな点。ない場合はキーごと省略>"
   },
-  "themes": ["<<= 80 chars Japanese cross-team theme>", ...]
+  "themes": ["<80字以内・チーム横断で見える傾向>", ...]
 }
 
-Scannable, specific, no fluff. Output Japanese.
+ルール：
+- tldr はちょうど 3 件。
+- highlights は日報を出したメンバー全員ぶん。「○○さん」とは呼ばず、メンバー名
+  だけをキーにする。
+- blockers_to_surface は本人がブロッカーを書いた人だけ。
+- themes は 2〜3 件。複数メンバーに共通する話題があれば挙げる。
+- 評価ではなく事実を伝える。「遅れている」「頑張った」など主観は使わない。
+- 出力は JSON のみ。
 """
 
 
