@@ -1,12 +1,16 @@
 name: cd-infra
 
+# Manual-only because Terraform drift can destroy production data-plane
+# resources (model deployments + Foundry project were wiped once when the
+# trigger was on every push). To apply infra changes, trigger this workflow
+# from the Actions tab with allow_destroy=true ONLY after eyeballing the plan.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "infra/terraform/**"
-      - ".github/workflows/cd-infra.yml"
   workflow_dispatch:
+    inputs:
+      allow_destroy:
+        description: "Allow plan to include destroys. Default false will fail the job if destroys are present."
+        required: false
+        default: "false"
 
 permissions:
   id-token: write
@@ -56,6 +60,17 @@ jobs:
           TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
         run: terraform plan -input=false -out=tfplan
+
+      - name: guard against destroys
+        working-directory: infra/terraform
+        run: |
+          summary=$(terraform show -no-color tfplan | grep -E "^Plan:" | head -1 || true)
+          echo "$summary"
+          destroy_count=$(echo "$summary" | sed -E 's/.* ([0-9]+) to destroy.*/\1/' | grep -E '^[0-9]+$' || echo 0)
+          if [ "$destroy_count" -gt 0 ] && [ "${{ inputs.allow_destroy }}" != "true" ]; then
+            echo "::error::Plan contains $destroy_count destroys. Re-run with allow_destroy=true if intentional."
+            exit 1
+          fi
 
       - name: terraform apply
         working-directory: infra/terraform
