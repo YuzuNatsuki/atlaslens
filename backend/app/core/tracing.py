@@ -7,6 +7,9 @@ as the same Application Insights resource is linked to the Foundry Hub / Project
 Why we trace:
   * Visible record of every LLM call (prompt, response, latency, tokens)
   * Prompt Flow runs auto-trace via the promptflow SDK
+  * Foundry Agent Service runs auto-trace via AIAgentsInstrumentor — these
+    show up under "Tracing" in the Foundry Portal as GenAI spans (model,
+    prompt, completion, tool calls) rather than plain HTTP dependencies
   * FastAPI + httpx instrumentation captures the request lifecycle around them
 """
 
@@ -43,8 +46,21 @@ def setup_tracing(service_name: str = "atlaslens-backend") -> bool:
         trace.set_tracer_provider(provider)
 
         HTTPXClientInstrumentor().instrument()
+
+        # GenAI semantic conventions for Foundry Agent Service runs.
+        # `enable_content_recording=True` includes prompts + completions in
+        # the span attributes so the Foundry Portal can render them. This is
+        # fine for our demo data (no PII); flip to False for any deployment
+        # with real customer content.
+        try:
+            from azure.ai.agents.telemetry import AIAgentsInstrumentor
+
+            AIAgentsInstrumentor().instrument(enable_content_recording=True)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("AIAgentsInstrumentor.instrument() failed: %s", exc)
+
         # FastAPI instrumentation is applied per-app in main.py after app creation.
-        log.info("OpenTelemetry tracing → Application Insights enabled (%s).", service_name)
+        log.warning("OpenTelemetry tracing → Application Insights enabled (%s).", service_name)
         return True
     except Exception as exc:  # noqa: BLE001
         log.warning("Failed to initialise OpenTelemetry tracing: %s", exc)
