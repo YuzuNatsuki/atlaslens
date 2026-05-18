@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
+    admin,
     auth,
     chat,
     daily_pulse,
@@ -79,6 +80,7 @@ app.include_router(simulator.router, prefix="/api/simulator", tags=["simulator"]
 app.include_router(goals.router, prefix="/api/goals", tags=["goals"])
 app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 
 @app.get("/")

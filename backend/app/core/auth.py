@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from functools import lru_cache
 from typing import Any
 
 import bcrypt
@@ -51,22 +50,26 @@ _DEMO_ACCOUNTS = [
 ]
 
 
-@lru_cache
 def _load_credentials() -> dict[str, Credential]:
     """Build the credentials map.
 
-    Sources, in order:
+    All three sources are layered (later sources override earlier ones):
+
       1. `credentials.yaml` next to the seed data (if present)
       2. Hard-coded demo accounts hashed with the env-provided `DEMO_PASSWORD`
+      3. Cosmos members whose `email` and `password_hash` are set (admin-managed)
 
-    The hard-coded path keeps the demo password out of source control so
-    GitHub secret scanning doesn't trip — the actual hash lives only in
-    memory at runtime.
+    Keeping all three layered means admin-created accounts work even when the
+    seed YAML still sits on disk for local development.
     """
+    import os
+
+    result: dict[str, Credential] = {}
+
+    # 1. credentials.yaml file (legacy seed)
     path = get_settings().data_dir / "credentials.yaml"
     if path.exists():
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        result: dict[str, Credential] = {}
         for entry in raw.get("accounts") or []:
             cred = Credential(
                 member_id=entry["member_id"],
@@ -75,25 +78,53 @@ def _load_credentials() -> dict[str, Credential]:
                 password_hash=entry["password_hash"],
             )
             result[cred.email.lower()] = cred
-        return result
 
-    import os
-
+    # 2. Hard-coded demo accounts (only filled in if not already present)
     password = os.environ.get("DEMO_PASSWORD", "atlaslens2026")
     salt = bcrypt.gensalt(rounds=10)
     hashed = bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-    return {
-        acc["email"].lower(): Credential(
-            member_id=acc["member_id"],
-            email=acc["email"],
-            name=acc["name"],
-            password_hash=hashed,
-        )
-        for acc in _DEMO_ACCOUNTS
-    }
+    for acc in _DEMO_ACCOUNTS:
+        key = acc["email"].lower()
+        if key not in result:
+            result[key] = Credential(
+                member_id=acc["member_id"],
+                email=acc["email"],
+                name=acc["name"],
+                password_hash=hashed,
+            )
+
+    # 3. Cosmos-managed accounts override everything else.
+    try:
+        from app.core.cosmos_client import cosmos_configured
+        from app.services import cosmos_repo
+
+        if cosmos_configured():
+            for m in cosmos_repo.all_members():
+                if m.email and m.password_hash:
+                    result[m.email.lower()] = Credential(
+                        member_id=m.id,
+                        email=m.email,
+                        name=m.name,
+                        password_hash=m.password_hash,
+                    )
+    except Exception:
+        pass
+
+    return result
 
 
 def _role_for_member(member_id: str) -> str:
+    """Effective role for a member, consulting Cosmos members.is_admin when available."""
+    try:
+        from app.core.cosmos_client import cosmos_configured
+        from app.services import cosmos_repo
+
+        if cosmos_configured():
+            profile = cosmos_repo.get_member(member_id)
+            if profile is not None and profile.is_admin:
+                return "admin"
+    except Exception:
+        pass
     return "em" if member_id.lower().startswith("em") else "member"
 
 
@@ -167,6 +198,13 @@ async def get_auth_context(
 
 
 async def require_em(auth: AuthContext) -> AuthContext:
-    if auth.role != "em":
+    # Admin implicitly satisfies EM permissions.
+    if auth.role not in ("em", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="EM access required")
+    return auth
+
+
+async def require_admin(auth: AuthContext) -> AuthContext:
+    if auth.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return auth

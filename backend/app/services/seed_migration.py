@@ -20,7 +20,7 @@ from app.models.schemas import (
     OneOnOne,
     Role,
 )
-from app.services import cosmos_repo
+from app.services import cosmos_repo, org_repo
 from app.services.data_loader import (
     _parse_daily_markdown,
     _parse_meeting_markdown,
@@ -95,9 +95,36 @@ def migrate_if_empty() -> dict[str, int]:
     profiles = _file_profiles()
     result: dict[str, int] = {}
 
+    # Org hierarchy seed (independent of file data)
+    if count_items("companies") == 0:
+        org_repo.upsert_company(org_repo.SEED_COMPANY)
+        result["companies"] = 1
+    if count_items("divisions") == 0:
+        for d in org_repo.SEED_DIVISIONS:
+            org_repo.upsert_division(d)
+        result["divisions"] = len(org_repo.SEED_DIVISIONS)
+    if count_items("departments") == 0:
+        for d in org_repo.SEED_DEPARTMENTS:
+            org_repo.upsert_department(d)
+        result["departments"] = len(org_repo.SEED_DEPARTMENTS)
+    if count_items("teams") == 0:
+        for t in org_repo.SEED_TEAMS:
+            org_repo.upsert_team(t)
+        result["teams"] = len(org_repo.SEED_TEAMS)
+
     if count_items("members") == 0 and profiles:
-        result["members"] = cosmos_repo.bulk_upsert_members(profiles)
-        log.info("seeded %d members", result["members"])
+        enriched = org_repo.apply_assignments_to(profiles)
+        result["members"] = cosmos_repo.bulk_upsert_members(enriched)
+        log.info("seeded %d members (with team assignments)", result["members"])
+    else:
+        # One-shot back-fill: existing members may have been seeded before the
+        # org hierarchy existed. Apply assignments if team_id is still null.
+        existing = cosmos_repo.all_members()
+        if existing and any(m.team_id is None for m in existing):
+            enriched = org_repo.apply_assignments_to(existing)
+            cosmos_repo.bulk_upsert_members(enriched)
+            result["members_patched"] = len(enriched)
+            log.info("back-filled team assignments for %d members", len(enriched))
 
     if count_items("goals") == 0:
         all_goals: list[Goal] = []

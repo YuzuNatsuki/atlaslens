@@ -28,6 +28,10 @@ CONTAINER_DEFS: dict[str, str] = {
     "one_on_ones": "/member_id",
     "meetings": "/id",
     "prep_notes": "/member_id",
+    "companies": "/id",
+    "divisions": "/company_id",
+    "departments": "/division_id",
+    "teams": "/department_id",
 }
 
 

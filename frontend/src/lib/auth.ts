@@ -15,7 +15,7 @@ export interface CurrentUser {
   name: string;
   identity_provider: string;
   member_id: string;
-  role: "em" | "member";
+  role: "em" | "member" | "admin";
   profile: {
     id: string;
     name: string;

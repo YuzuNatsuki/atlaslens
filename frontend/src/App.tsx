@@ -11,6 +11,7 @@ import OneOnOnePage from "./pages/OneOnOne";
 import SimulatorPage from "./pages/Simulator";
 import DailyPulsePage from "./pages/DailyPulse";
 import ChatPage from "./pages/Chat";
+import AdminPage from "./pages/Admin";
 
 import MyDashboard from "./pages/me/MyDashboard";
 import MyGoals from "./pages/me/MyGoals";
@@ -22,6 +23,11 @@ const emNav = [
   { to: "/daily-pulse", label: "Daily Pulse" },
   { to: "/simulator", label: "Org Simulator" },
   { to: "/chat", label: "チャット" },
+];
+
+const adminNav = [
+  ...emNav,
+  { to: "/admin", label: "管理" },
 ];
 
 const memberNav = [
@@ -42,19 +48,21 @@ export default function App() {
   }
 
   const user = userQ.data;
-  const navItems = user.role === "em" ? emNav : memberNav;
+  const isAdmin = user.role === "admin";
+  const isEmLike = isAdmin || user.role === "em";
+  const navItems = isAdmin ? adminNav : isEmLike ? emNav : memberNav;
 
   return (
     <div className="min-h-screen">
       <Header user={user} navItems={navItems} />
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6">
-        {user.role === "em" ? <EmRoutes /> : <MemberRoutes />}
+        {isEmLike ? <EmRoutes isAdmin={isAdmin} /> : <MemberRoutes />}
       </main>
     </div>
   );
 }
 
-function EmRoutes() {
+function EmRoutes({ isAdmin }: { isAdmin: boolean }) {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
@@ -63,6 +71,7 @@ function EmRoutes() {
       <Route path="/simulator" element={<SimulatorPage />} />
       <Route path="/daily-pulse" element={<DailyPulsePage />} />
       <Route path="/chat" element={<ChatPage />} />
+      {isAdmin && <Route path="/admin" element={<AdminPage />} />}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
