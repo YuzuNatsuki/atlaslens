@@ -33,7 +33,7 @@ export const api = {
     style?: string;
     style_instructions?: string;
   }) =>
-    authedFetch<{ reply: string; style?: string }>("/api/chat", {
+    authedFetch<ChatReply>("/api/chat", {
       method: "POST",
       body: JSON.stringify(input),
     }),
@@ -44,6 +44,19 @@ export const api = {
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+}
+
+export interface ToolCallTrace {
+  name: string;
+  arguments: Record<string, unknown>;
+  result_preview: string;
+  elapsed_ms: number;
+}
+
+export interface ChatReply {
+  reply: string;
+  style?: string;
+  tool_calls: ToolCallTrace[];
 }
 
 // ---- types ----

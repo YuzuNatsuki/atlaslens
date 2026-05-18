@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Send, Trash2, Wand2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Send, Trash2, Wand2, Wrench } from "lucide-react";
 
-import { api, type ChatMessage } from "@/lib/api";
+import { api, type ChatMessage, type ToolCallTrace } from "@/lib/api";
 
 const STARTERS = [
   "今、最も注意して見るべきメンバーは誰ですか？",
@@ -17,7 +17,10 @@ export default function ChatPage() {
   const stylesQ = useQuery({ queryKey: ["chat-styles"], queryFn: api.chatStyles });
   const presets = stylesQ.data?.styles ?? [];
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  interface DisplayMessage extends ChatMessage {
+    tool_calls?: ToolCallTrace[];
+  }
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [style, setStyle] = useState<string>("standard");
   const [customInstructions, setCustomInstructions] = useState<string>("");
@@ -31,7 +34,14 @@ export default function ChatPage() {
         style_instructions: style === CUSTOM_KEY ? customInstructions : undefined,
       }),
     onSuccess: (data) => {
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.reply,
+          tool_calls: data.tool_calls,
+        },
+      ]);
     },
   });
 
@@ -46,10 +56,12 @@ export default function ChatPage() {
       // Refuse silently — user must give custom instructions.
       return;
     }
-    const next: ChatMessage[] = [...messages, { role: "user", content }];
+    const next: DisplayMessage[] = [...messages, { role: "user", content }];
     setMessages(next);
     setDraft("");
-    sendM.mutate(next);
+    // Send only `role`+`content` upstream — strip the local tool_calls trace.
+    const sendable: ChatMessage[] = next.map(({ role, content }) => ({ role, content }));
+    sendM.mutate(sendable);
   };
 
   const reset = () => {
@@ -141,7 +153,12 @@ export default function ChatPage() {
 
         <div className="grid gap-3">
           {messages.map((m, i) => (
-            <Bubble key={i} role={m.role} content={m.content} />
+            <div key={i} className="grid gap-1">
+              {m.tool_calls && m.tool_calls.length > 0 && (
+                <ToolCallsBlock calls={m.tool_calls} />
+              )}
+              <Bubble role={m.role} content={m.content} />
+            </div>
           ))}
           {sendM.isPending && <Bubble role="assistant" content="..." pending />}
           {sendM.isError && (
@@ -208,6 +225,48 @@ function StyleChip({
       {label}
     </button>
   );
+}
+
+function ToolCallsBlock({ calls }: { calls: ToolCallTrace[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="text-xs">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-700"
+      >
+        {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        <Wrench size={12} />
+        Agent が {calls.length} 件のツールを呼び出しました
+      </button>
+      {open && (
+        <ul className="mt-2 grid gap-1 ml-4">
+          {calls.map((c, i) => (
+            <li key={i} className="border border-slate-200 rounded p-2 bg-slate-50">
+              <div className="font-mono text-[11px] text-brand">
+                {c.name}({Object.keys(c.arguments).length > 0 ? formatArgs(c.arguments) : ""})
+              </div>
+              <div className="text-[11px] text-slate-500">
+                {c.elapsed_ms} ms · {c.result_preview.length} 字 returned
+              </div>
+              <details className="mt-1">
+                <summary className="cursor-pointer text-slate-500">結果プレビュー</summary>
+                <pre className="text-[10px] mt-1 whitespace-pre-wrap break-words font-mono text-slate-600">
+                  {c.result_preview}
+                </pre>
+              </details>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function formatArgs(args: Record<string, unknown>): string {
+  return Object.entries(args)
+    .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+    .join(", ");
 }
 
 function Bubble({
