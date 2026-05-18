@@ -9,7 +9,7 @@ export default function DailyPulsePage() {
   const summaryQ = useQuery({
     queryKey: ["team-summary", reportDate],
     queryFn: () => api.teamSummary(reportDate),
-    enabled: Boolean(reportDate),
+    enabled: false,  // Don't auto-fire — trigger via button below.
   });
 
   return (
@@ -24,13 +24,26 @@ export default function DailyPulsePage() {
             onChange={(e) => setReportDate(e.target.value)}
             className="border border-slate-300 rounded px-2 py-1 text-sm"
           />
-          <button onClick={() => summaryQ.refetch()} className="btn-ghost">
-            再生成
+          <button
+            onClick={() => summaryQ.refetch()}
+            disabled={summaryQ.isFetching}
+            className="btn-primary"
+          >
+            {summaryQ.isFetching
+              ? "AI 要約中… (~5s)"
+              : summaryQ.data
+                ? "再生成"
+                : "要約を生成"}
           </button>
         </div>
+        {!summaryQ.data && !summaryQ.isFetching && (
+          <p className="text-sm text-slate-500 mt-2">
+            日付を選んでボタンを押すと、Reporter Agent が当日の日報を 5 秒前後で要約します。
+          </p>
+        )}
       </section>
 
-      {summaryQ.isLoading && <p className="text-slate-500">AI が要約中…</p>}
+      {summaryQ.isFetching && <p className="text-slate-500">AI が要約中…</p>}
       {summaryQ.data && (
         <div className="grid gap-3">
           {summaryQ.data.summary.tldr && (

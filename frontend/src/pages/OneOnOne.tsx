@@ -21,10 +21,11 @@ export default function OneOnOnePage() {
   const [structuredNotes, setStructuredNotes] = useState("");
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
+  // Don't auto-fetch — the prep packet costs an LLM call. Trigger via button.
   const packetQ = useQuery({
     queryKey: ["1on1-packet", memberId],
     queryFn: () => api.getOneOnOnePacket(memberId),
-    enabled: Boolean(memberId),
+    enabled: false,
   });
 
   const draftM = useMutation({
@@ -68,9 +69,24 @@ export default function OneOnOnePage() {
   return (
     <div className="grid gap-4 lg:gap-6 lg:grid-cols-2">
       <section>
-        <h2 className="text-lg font-semibold mb-3">事前パケット</h2>
-        {packetQ.isLoading && (
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">事前パケット</h2>
+          <button
+            onClick={() => packetQ.refetch()}
+            disabled={packetQ.isFetching}
+            className="btn-primary text-sm"
+          >
+            {packetQ.isFetching ? "生成中… (~10s)" : packetQ.data ? "再生成" : "事前パケットを生成"}
+          </button>
+        </div>
+        {packetQ.isFetching && (
           <p className="text-slate-500">準備中… (AI が直近の活動を確認しています)</p>
+        )}
+        {!packetQ.data && !packetQ.isFetching && (
+          <p className="text-sm text-slate-500">
+            「事前パケットを生成」を押すと、Coach Agent が直近の OKR / 日報 / 前回 1on1 から
+            議論ポイントと質問候補を作ります（10 秒前後）。
+          </p>
         )}
         {packetQ.data && (
           <div className="grid gap-3">

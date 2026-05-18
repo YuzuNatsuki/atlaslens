@@ -3,6 +3,10 @@ import { authedFetch } from "@/lib/auth";
 export const api = {
   listMembers: () => authedFetch<{ members: MemberSummary[] }>("/api/members"),
   getMember: (id: string) => authedFetch<MemberDetail>(`/api/members/${id}`),
+  memberInsights: (id: string) =>
+    authedFetch<{ insights: Insights }>(`/api/members/${id}/insights`, {
+      method: "POST",
+    }),
   getOneOnOnePacket: (memberId: string) =>
     authedFetch<OneOnOnePacket>(`/api/one-on-ones/packet/${memberId}`),
   draftMinutes: (input: { member_id: string; raw_notes: string }) =>
@@ -58,7 +62,7 @@ export interface MemberDetail {
   recent_daily_reports: DailyReport[];
   recent_one_on_ones: OneOnOne[];
   recent_meetings: Meeting[];
-  insights: Insights;
+  insights?: Insights;
 }
 
 export interface Goal {

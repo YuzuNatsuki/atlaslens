@@ -1,7 +1,8 @@
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Sparkles } from "lucide-react";
 
-import { api } from "@/lib/api";
+import { api, type Insights } from "@/lib/api";
 import { pickEvidence, pickText } from "@/lib/format";
 
 export default function MemberDetail() {
@@ -62,9 +63,9 @@ export default function MemberDetail() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">AI Insights</h2>
-        <div className="card">
-          <Insights insights={m.insights} />
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-semibold">AI Insights</h2>
+          <InsightsTrigger memberId={m.profile.id} />
         </div>
       </section>
 
@@ -114,8 +115,35 @@ export default function MemberDetail() {
   );
 }
 
-function Insights({ insights }: { insights: any }) {
-  if (insights?.parse_error) {
+function InsightsTrigger({ memberId }: { memberId: string }) {
+  const m = useMutation({ mutationFn: () => api.memberInsights(memberId) });
+  return (
+    <div className="grid gap-2 w-full sm:w-auto">
+      <button
+        onClick={() => m.mutate()}
+        disabled={m.isPending}
+        className="btn-primary flex items-center gap-1"
+      >
+        <Sparkles size={14} />
+        {m.isPending ? "Analyzer 実行中… (~10s)" : "Insights を生成"}
+      </button>
+      {m.data && (
+        <div className="card mt-2">
+          <Insights insights={m.data.insights} />
+        </div>
+      )}
+      {m.isError && (
+        <p className="text-sm text-rose-700">
+          {(m.error as Error).message || "失敗しました"}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Insights({ insights }: { insights: Insights | undefined }) {
+  if (!insights) return null;
+  if (insights.parse_error) {
     return <pre className="text-xs whitespace-pre-wrap text-slate-500">{insights.raw}</pre>;
   }
   return (
