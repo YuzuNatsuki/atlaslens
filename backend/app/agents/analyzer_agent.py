@@ -1,11 +1,21 @@
-"""Analyzer Agent — uses Azure OpenAI (deployed under the Foundry resource)."""
+"""Analyzer Agent — hosted on Azure AI Foundry Agent Service.
+
+Primary path: Foundry Agent Service (managed agent, thread+run shown in the
+Foundry Portal). Fallback: direct chat completion. The fallback exists so
+local dev or environments without the Foundry RBAC propagation still work,
+but the production trace is the Foundry one.
+"""
 
 from __future__ import annotations
 
 import json
+import logging
 
+from app.core import foundry_agents
 from app.core.azure_clients import chat_complete
 from app.models.schemas import DailyReport, Goal, MemberProfile, OneOnOne
+
+logger = logging.getLogger(__name__)
 
 ANALYZER_SYSTEM_PROMPT = """\
 あなたは AtlasLens の "Analyzer" です。日本のエンジニアリングチームを支援する
@@ -81,16 +91,35 @@ async def analyze_member(
         "Member context follows. Return the JSON described in the system prompt.\n\n"
         + json.dumps(payload, ensure_ascii=False, default=str)
     )
-    raw = await chat_complete(
-        messages=[
-            {"role": "system", "content": ANALYZER_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.2,
-        response_format={"type": "json_object"},
-        max_tokens=900,
-    )
+
+    raw = ""
+    source = "fallback_chat"
+    if foundry_agents.is_available():
+        try:
+            raw = await foundry_agents.run_agent(
+                name="atlaslens-analyzer",
+                instructions=ANALYZER_SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+            )
+            source = "foundry_agent"
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Foundry analyzer run failed, falling back: %s", exc)
+
+    if not raw:
+        raw = await chat_complete(
+            messages=[
+                {"role": "system", "content": ANALYZER_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"},
+            max_tokens=900,
+        )
+
     try:
-        return json.loads(raw)
+        result = json.loads(raw)
+        if isinstance(result, dict):
+            result["_source"] = source
+        return result
     except json.JSONDecodeError:
-        return {"raw": raw, "parse_error": True}
+        return {"raw": raw, "parse_error": True, "_source": source}

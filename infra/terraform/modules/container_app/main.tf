@@ -20,6 +20,10 @@ variable "openai_api_key" {
   type      = string
   sensitive = true
 }
+variable "foundry_project_endpoint" {
+  type    = string
+  default = ""
+}
 variable "cosmos_endpoint" { type = string }
 variable "cosmos_key" {
   type      = string
@@ -143,6 +147,10 @@ resource "azurerm_container_app" "backend" {
       env {
         name  = "APP_ENV"
         value = "container"
+      }
+      env {
+        name  = "AZURE_AI_FOUNDRY_PROJECT_ENDPOINT"
+        value = var.foundry_project_endpoint
       }
     }
   }

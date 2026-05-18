@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     azure_openai_chat_deployment_fast: str = Field(default="gpt-4o-mini")
     azure_openai_embedding_deployment: str = Field(default="text-embedding-3-large")
 
+    azure_ai_foundry_project_endpoint: str = Field(default="")
+
     azure_search_endpoint: str = Field(default="")
     azure_search_api_key: str = Field(default="")
     azure_search_index_name: str = Field(default="atlaslens-knowledge")

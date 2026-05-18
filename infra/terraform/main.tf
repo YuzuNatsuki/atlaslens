@@ -92,12 +92,21 @@ module "container_app" {
   registry_username     = module.acr.admin_username
   registry_password     = module.acr.admin_password
 
-  openai_endpoint = module.foundry.openai_endpoint
-  openai_api_key  = module.foundry.primary_key
-  cosmos_endpoint = module.cosmos.endpoint
-  cosmos_key      = module.cosmos.primary_key
-  jwt_secret      = var.jwt_secret
-  tags            = var.tags
+  openai_endpoint          = module.foundry.openai_endpoint
+  openai_api_key           = module.foundry.primary_key
+  foundry_project_endpoint = module.foundry.foundry_project_endpoint
+  cosmos_endpoint          = module.cosmos.endpoint
+  cosmos_key               = module.cosmos.primary_key
+  jwt_secret               = var.jwt_secret
+  tags                     = var.tags
+}
+
+# Container App MI needs data-plane access to the Foundry account so the
+# Analyzer can call Agent Service via AAD (no API keys for Agent threads).
+resource "azurerm_role_assignment" "container_app_foundry_user" {
+  scope                = module.foundry.account_id
+  role_definition_name = "Azure AI User"
+  principal_id         = module.container_app.principal_id
 }
 
 module "static_web_app" {
