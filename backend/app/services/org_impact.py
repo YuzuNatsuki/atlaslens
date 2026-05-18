@@ -13,6 +13,7 @@ import json
 from collections import Counter
 from datetime import datetime, timedelta
 
+from app.agents.critic_agent import critique, refine
 from app.agents.simulator_agent import simulate as legacy_simulate
 from app.core.cache import cache
 from app.services.data_loader import DataLoader
@@ -96,6 +97,36 @@ async def _execute(change: dict, org_context: dict) -> dict:
     return result
 
 
+async def _plan_act_critique(change: dict, org_context: dict) -> dict:
+    """Multi-agent loop: run Simulator → Critic reviews → Refiner improves.
+
+    The Critic only triggers a refinement when verdict == 'needs_refinement'.
+    Adds `_critique` (the Critic's verdict + comments) onto the result so the
+    UI can show what the multi-agent loop produced.
+    """
+    initial = await _execute(change, org_context)
+    # Don't critique a fallback result (no risk_level means parse error or empty).
+    if not isinstance(initial, dict) or not initial.get("overall_risk_level"):
+        return initial
+
+    critic_report = await critique(initial)
+    if critic_report.get("verdict") == "good":
+        initial["_critique"] = critic_report
+        return initial
+
+    refined = await refine(initial, critic_report)
+    if isinstance(refined, dict):
+        # Preserve provenance metadata from the original run.
+        for key in ("_source", "_prompt_flow_error"):
+            if key in initial:
+                refined.setdefault(key, initial[key])
+        refined["_critique"] = critic_report
+        refined["_refined"] = True
+        return refined
+    initial["_critique"] = critic_report
+    return initial
+
+
 async def simulate_change(change: dict) -> dict:
     loader = DataLoader()
     org_context = _build_org_context(loader)
@@ -106,6 +137,6 @@ async def simulate_change(change: dict) -> dict:
     ).hexdigest()
     result = await cache.get_or_compute(
         cache_key,
-        lambda: _execute(change, org_context),
+        lambda: _plan_act_critique(change, org_context),
     )
     return {"change": change, "impact": result, "members": member_index}

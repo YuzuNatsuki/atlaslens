@@ -211,9 +211,13 @@ function SimulationView({ result }: { result: any }) {
             総合リスク: {impact.overall_risk_level}
           </span>
           {source && <span className="text-xs text-slate-500">経路: {source}</span>}
+          {impact._refined && (
+            <span className="pill bg-purple-100 text-purple-700">Critic レビュー反映済み</span>
+          )}
           <p className="text-sm text-slate-700">{impact.summary}</p>
         </div>
       )}
+      {impact._critique && <CritiqueBlock critique={impact._critique} />}
 
       <Block title="コミュニケーション経路への影響">
         {(impact.communication_impacts ?? []).map((c: any, i: number) => {
@@ -282,6 +286,43 @@ function SimulationView({ result }: { result: any }) {
         ))}
       </Block>
     </div>
+  );
+}
+
+function CritiqueBlock({ critique }: { critique: any }) {
+  const verdict = critique?.verdict;
+  const sections: { label: string; items: string[] }[] = [
+    { label: "不足していた観点", items: critique?.missing_aspects ?? [] },
+    { label: "不整合", items: critique?.inconsistencies ?? [] },
+    { label: "トーンの指摘", items: critique?.tone_issues ?? [] },
+    { label: "推奨改善", items: critique?.suggested_refinements ?? [] },
+  ].filter((s) => Array.isArray(s.items) && s.items.length > 0);
+
+  return (
+    <details className="card border-purple-200 bg-purple-50/40">
+      <summary className="cursor-pointer text-sm font-medium text-purple-800">
+        Critic エージェントの所見
+        <span className="ml-2 text-xs text-purple-600">
+          ({verdict === "good" ? "問題なし" : "改善余地あり → Refiner が反映"})
+        </span>
+      </summary>
+      {sections.length === 0 ? (
+        <p className="mt-2 text-xs text-slate-500">Critic は追加の指摘なしと判断しました。</p>
+      ) : (
+        <div className="mt-2 grid gap-2">
+          {sections.map((s) => (
+            <div key={s.label}>
+              <div className="text-xs font-semibold text-purple-700">{s.label}</div>
+              <ul className="ml-4 list-disc text-xs text-slate-700 grid gap-0.5">
+                {s.items.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </details>
   );
 }
 
