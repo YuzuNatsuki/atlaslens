@@ -101,13 +101,11 @@ module "container_app" {
   tags                     = var.tags
 }
 
-# Container App MI needs data-plane access to the Foundry account so the
-# Analyzer can call Agent Service via AAD (no API keys for Agent threads).
-resource "azurerm_role_assignment" "container_app_foundry_user" {
-  scope                = module.foundry.account_id
-  role_definition_name = "Azure AI User"
-  principal_id         = module.container_app.principal_id
-}
+# NOTE: the Container App MI also needs "Azure AI User" on the Foundry account
+# so the Analyzer can talk to Agent Service via AAD. We grant it via
+# `infra/scripts/grant_container_app_foundry_role.sh` instead of Terraform
+# because the principal_id is (known after apply) on first run, which the
+# azurerm_role_assignment resource cannot resolve.
 
 module "static_web_app" {
   source              = "./modules/static_web_app"
