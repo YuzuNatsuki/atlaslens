@@ -64,7 +64,7 @@ export default function MemberDetail() {
 
       <section>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold">AI Insights</h2>
+          <h2 className="text-lg font-semibold">AI による状況整理</h2>
           <InsightsTrigger memberId={m.profile.id} />
         </div>
       </section>
@@ -125,7 +125,7 @@ function InsightsTrigger({ memberId }: { memberId: string }) {
         className="btn-primary flex items-center gap-1"
       >
         <Sparkles size={14} />
-        {m.isPending ? "Analyzer 実行中… (~10s)" : "Insights を生成"}
+        {m.isPending ? "状況を AI に整理させています… (約 10 秒)" : "状況を AI に整理させる"}
       </button>
       {m.data && (
         <div className="card mt-2">
@@ -148,11 +148,11 @@ function Insights({ insights }: { insights: Insights | undefined }) {
   }
   return (
     <div className="grid md:grid-cols-2 gap-4">
-      <InsightBlock title="Highlights" items={insights.highlights} tone="text-emerald-700" />
-      <InsightBlock title="Risks" items={insights.risks} tone="text-rose-700" />
-      <InsightBlock title="Growth signals" items={insights.growth_signals} tone="text-brand" />
+      <InsightBlock title="できていること" items={insights.highlights} tone="text-emerald-700" />
+      <InsightBlock title="注意したい点" items={insights.risks} tone="text-rose-700" />
+      <InsightBlock title="成長の兆し" items={insights.growth_signals} tone="text-brand" />
       <div>
-        <h3 className="font-medium text-sm text-slate-500 mb-1">EM への質問候補</h3>
+        <h3 className="font-medium text-sm text-slate-500 mb-1">対話の切り口（1on1 で確認したい論点）</h3>
         <ul className="text-sm list-disc ml-5">
           {(insights.suggested_questions ?? []).map((q: unknown, i: number) => (
             <li key={i}>{pickText(q)}</li>
@@ -182,7 +182,9 @@ function InsightBlock({
             <li key={i}>
               {pickText(it)}
               {evidence.length > 0 && (
-                <span className="text-xs text-slate-400 ml-1">({evidence.join(", ")})</span>
+                <span className="text-xs text-slate-400 ml-1">
+                  (参照元: {evidence.join(", ")})
+                </span>
               )}
             </li>
           );

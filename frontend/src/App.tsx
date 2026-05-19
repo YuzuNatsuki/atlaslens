@@ -20,8 +20,8 @@ import MyOneOnOnes from "./pages/me/MyOneOnOnes";
 
 const emNav = [
   { to: "/", label: "ダッシュボード" },
-  { to: "/daily-pulse", label: "Daily Pulse" },
-  { to: "/simulator", label: "Org Simulator" },
+  { to: "/daily-pulse", label: "日報サマリー" },
+  { to: "/simulator", label: "組織改編シミュレーション" },
   { to: "/chat", label: "チャット" },
 ];
 
@@ -103,7 +103,7 @@ function Header({
       <div className="mx-auto max-w-7xl flex items-center px-4 sm:px-6 py-3">
         <span className="text-xl font-bold text-brand">AtlasLens</span>
         <span className="ml-3 text-xs text-slate-500 hidden sm:inline">
-          {user.role === "em" ? "EM Co-pilot" : "Member"}
+          {user.role === "em" ? "EM-Copilot" : "メンバー"}
         </span>
         <nav className="ml-10 hidden md:flex gap-4">
           {navItems.map((n) => (

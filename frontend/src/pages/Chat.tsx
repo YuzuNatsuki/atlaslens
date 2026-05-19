@@ -237,7 +237,7 @@ function ToolCallsBlock({ calls }: { calls: ToolCallTrace[] }) {
       >
         {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         <Wrench size={12} />
-        Agent が {calls.length} 件のツールを呼び出しました
+        AI が {calls.length} 件の情報を参照しました
       </button>
       {open && (
         <ul className="mt-2 grid gap-1 ml-4">

@@ -91,9 +91,9 @@ export default function SimulatorPage() {
   return (
     <div className="grid gap-4 sm:gap-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold">Org Impact Simulator</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">組織改編シミュレーション</h1>
         <p className="text-sm text-slate-500 mt-1">
-          体制変更案を入力すると、Foundry の Prompt Flow が 4 軸（コミュニケーション・知識・負荷・タイムライン）で並列に分析します。
+          異動や体制変更の案を入力すると、AI が 4 つの観点（連携・知識・負荷・スケジュール）を並列で確認し、想定される影響と背景を整理してお伝えします。
         </p>
       </div>
 
@@ -162,7 +162,7 @@ export default function SimulatorPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => simM.mutate()} disabled={!canSubmit} className="btn-primary">
-              {simM.isPending ? "シミュレーション中… (~15s)" : "影響を予測"}
+              {simM.isPending ? "影響を分析しています… (約 15 秒)" : "影響を確認する"}
             </button>
             {simM.isError && (
               <span className="text-sm text-rose-700">
@@ -174,7 +174,7 @@ export default function SimulatorPage() {
       </section>
 
       <section>
-        <h2 className="font-semibold text-sm text-slate-500 mb-2">サンプルから読み込む</h2>
+        <h2 className="font-semibold text-sm text-slate-500 mb-2">定型パターンを使う</h2>
         <div className="grid gap-2 sm:grid-cols-3">
           {PRESETS.map((p, i) => (
             <button
@@ -200,6 +200,18 @@ const RISK_TONE: Record<string, string> = {
   high: "bg-rose-100 text-rose-700",
 };
 
+const RISK_LABEL: Record<string, string> = {
+  low: "低",
+  medium: "中",
+  high: "高",
+};
+
+const SOURCE_LABEL: Record<string, string> = {
+  prompt_flow: "ワークフロー",
+  fallback_agent: "バックアップ",
+  fallback_agent_empty_flow: "バックアップ",
+};
+
 function SimulationView({ result }: { result: any }) {
   const { impact, members } = result;
   const source = impact?._source;
@@ -208,9 +220,13 @@ function SimulationView({ result }: { result: any }) {
       {impact.overall_risk_level && (
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <span className={`pill ${RISK_TONE[impact.overall_risk_level] ?? ""}`}>
-            総合リスク: {impact.overall_risk_level}
+            総合リスク: {RISK_LABEL[impact.overall_risk_level] ?? impact.overall_risk_level}
           </span>
-          {source && <span className="text-xs text-slate-500">経路: {source}</span>}
+          {source && (
+            <span className="text-xs text-slate-500">
+              処理ルート: {SOURCE_LABEL[source] ?? source}
+            </span>
+          )}
           {impact._refined && (
             <span className="pill bg-purple-100 text-purple-700">Critic レビュー反映済み</span>
           )}
@@ -219,7 +235,7 @@ function SimulationView({ result }: { result: any }) {
       )}
       {impact._critique && <CritiqueBlock critique={impact._critique} />}
 
-      <Block title="コミュニケーション経路への影響">
+      <Block title="報告・相談ラインへの影響">
         {(impact.communication_impacts ?? []).map((c: any, i: number) => {
           const pair = typeof c.pair === "string"
             ? c.pair
@@ -231,14 +247,14 @@ function SimulationView({ result }: { result: any }) {
             <li key={i}>
               <span className="font-medium">{pair}</span>: {pickText(c.change)}
               {c.evidence && (
-                <span className="text-xs text-slate-400 ml-1">({pickText(c.evidence)})</span>
+                <span className="text-xs text-slate-400 ml-1">(参照元: {pickText(c.evidence)})</span>
               )}
             </li>
           );
         })}
       </Block>
 
-      <Block title="知識/単一障害点リスク">
+      <Block title="業務属人化リスク">
         {(impact.knowledge_risks ?? []).map((r: any, i: number) => (
           <li key={i}>
             <strong>{pickText(r.area)}</strong>
@@ -253,13 +269,13 @@ function SimulationView({ result }: { result: any }) {
             <br />
             <span className="text-rose-700 text-sm">{pickText(r.risk_after_change)}</span>
             {r.evidence && (
-              <span className="text-xs text-slate-400 ml-1">({pickText(r.evidence)})</span>
+              <span className="text-xs text-slate-400 ml-1">(参照元: {pickText(r.evidence)})</span>
             )}
           </li>
         ))}
       </Block>
 
-      <Block title="ワークロード変化">
+      <Block title="担当業務量の変化">
         {(impact.workload_shifts ?? []).map((w: any, i: number) => (
           <li key={i}>
             <strong>{members[w.member] ?? w.member}</strong>: {pickText(w.before)} →{" "}
@@ -269,7 +285,7 @@ function SimulationView({ result }: { result: any }) {
         ))}
       </Block>
 
-      <Block title="移行スケジュール推奨">
+      <Block title="実施ステップ案">
         {(impact.timeline_recommendation ?? []).map((t: any, i: number) => (
           <li key={i}>
             <strong>
@@ -303,9 +319,14 @@ function CritiqueBlock({ critique }: { critique: any }) {
       <summary className="cursor-pointer text-sm font-medium text-purple-800">
         Critic エージェントの所見
         <span className="ml-2 text-xs text-purple-600">
-          ({verdict === "good" ? "問題なし" : "改善余地あり → Refiner が反映"})
+          ({verdict === "good" ? "問題なし" : "改善余地あり → 再生成で反映"})
         </span>
       </summary>
+      <p className="mt-2 text-xs text-slate-600">
+        AI 同士のレビューで指摘された点を反映しています。下記は Critic エージェントが
+        最初の出力に対して指摘した内容で、改善が必要と判断された場合は再生成で
+        本文に反映済みです。
+      </p>
       {sections.length === 0 ? (
         <p className="mt-2 text-xs text-slate-500">Critic は追加の指摘なしと判断しました。</p>
       ) : (

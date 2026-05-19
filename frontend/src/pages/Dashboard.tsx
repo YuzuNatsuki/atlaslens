@@ -17,7 +17,7 @@ export default function Dashboard() {
   return (
     <div className="grid gap-6">
       <section>
-        <h2 className="text-lg font-semibold mb-3">チーム (AtlasCorp)</h2>
+        <h2 className="text-lg font-semibold mb-3">チーム（アトラス株式会社）</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {membersQ.isLoading && <p className="text-slate-500">読み込み中…</p>}
           {membersQ.data?.members.map((m) => (
@@ -36,7 +36,7 @@ export default function Dashboard() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">Team Health (M6 — 観察事実のみ)</h2>
+        <h2 className="text-lg font-semibold mb-3">チームコンディション（観察事実のみ）</h2>
         {healthQ.isLoading && <p className="text-slate-500">読み込み中…</p>}
         <div className="grid gap-2">
           {healthQ.data?.members.map((row) => (

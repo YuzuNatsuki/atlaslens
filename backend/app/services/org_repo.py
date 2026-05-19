@@ -134,7 +134,7 @@ def new_id(prefix: str) -> str:
 # ---------- seed (called from seed_migration) ----------
 
 
-SEED_COMPANY = Company(id="atlascorp", name="AtlasCorp")
+SEED_COMPANY = Company(id="atlascorp", name="アトラス株式会社")
 
 SEED_DIVISIONS = [
     Division(id="div-platform", company_id="atlascorp", name="Platform 本部", head_member_id="em001"),

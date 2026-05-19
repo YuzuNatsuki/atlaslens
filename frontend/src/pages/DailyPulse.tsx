@@ -15,7 +15,7 @@ export default function DailyPulsePage() {
   return (
     <div className="grid gap-6">
       <section className="card">
-        <h2 className="text-lg font-semibold mb-2">Daily Pulse — チーム要約</h2>
+        <h2 className="text-lg font-semibold mb-2">日報サマリー — チーム要約</h2>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <label className="text-sm text-slate-600">日付:</label>
           <input
@@ -38,7 +38,8 @@ export default function DailyPulsePage() {
         </div>
         {!summaryQ.data && !summaryQ.isFetching && (
           <p className="text-sm text-slate-500 mt-2">
-            日付を選んでボタンを押すと、Reporter Agent が当日の日報を 5 秒前後で要約します。
+            日付を選んでボタンを押すと、Reporter エージェントが当日のメンバー全員の日報を読み込み、
+            5 秒前後でチーム全体のトピックや気がかりな点を整理してお返しします。
           </p>
         )}
       </section>

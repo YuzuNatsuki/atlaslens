@@ -25,7 +25,7 @@ async def _em_only(auth: AuthContext = Depends(get_auth_context)) -> AuthContext
 
 @router.get("")
 async def list_members(_: AuthContext = Depends(_em_only)) -> dict:
-    """List every member in AtlasCorp with light profile data. EM only."""
+    """List every member in アトラス株式会社 with light profile data. EM only."""
     loader = DataLoader()
     members = loader.load_profiles()
     return {"members": [m.model_dump(mode="json") for m in members]}

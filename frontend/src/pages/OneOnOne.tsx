@@ -61,7 +61,7 @@ export default function OneOnOnePage() {
         follow_ups: followUps.split("\n").map((s) => s.trim()).filter(Boolean),
       }),
     onSuccess: () => {
-      setSaveMsg("1on1 を記録として保存しました。Member 側でも閲覧できます。");
+      setSaveMsg("1on1 を記録として保存しました。メンバー側の画面からも閲覧できます。");
       qc.invalidateQueries({ queryKey: ["1on1-packet", memberId] });
     },
   });
@@ -84,8 +84,10 @@ export default function OneOnOnePage() {
         )}
         {!packetQ.data && !packetQ.isFetching && (
           <p className="text-sm text-slate-500">
-            「事前パケットを生成」を押すと、Coach Agent が直近の OKR / 日報 / 前回 1on1 から
-            議論ポイントと質問候補を作ります（10 秒前後）。
+            「事前パケットを生成」を押すと、Coach エージェントが直近の OKR、日報、
+            前回 1on1 の内容を横断的に確認し、当日に話すべき議論ポイントの候補と、
+            メンバーの状況を踏まえた質問例を整理してお返しします（10 秒前後）。
+            事実ベースで挙げているため、各項目には参照元の日報・1on1 メモも添えられます。
           </p>
         )}
         {packetQ.data && (
@@ -110,7 +112,7 @@ export default function OneOnOnePage() {
               }))}
             />
             <SectionBlock
-              title="サーフェスすべきブロッカー"
+              title="拾い上げるべきブロッカー"
               items={(packetQ.data.packet.blockers_to_surface ?? []).map((b: any) => ({
                 primary: pickText(b),
               }))}

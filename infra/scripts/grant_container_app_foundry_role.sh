@@ -12,7 +12,7 @@ set -euo pipefail
 RG="${RG:-atlaslens-rg}"
 APP="${APP:-atlaslens-backend}"
 FOUNDRY="${FOUNDRY:-atlaslens-foundry}"
-ROLE="${ROLE:-Azure AI Developer}"
+ROLE="${ROLE:-Cognitive Services User}"
 
 SUB=$(az account show --query id -o tsv)
 SCOPE="/subscriptions/${SUB}/resourceGroups/${RG}/providers/Microsoft.CognitiveServices/accounts/${FOUNDRY}"

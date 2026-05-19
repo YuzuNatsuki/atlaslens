@@ -24,7 +24,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-slate-50">
       <div className="w-full max-w-md card">
         <h1 className="text-2xl font-bold text-brand">AtlasLens</h1>
-        <p className="text-sm text-slate-500 mb-6">EM Co-pilot · Azure AI Foundry powered</p>
+        <p className="text-sm text-slate-500 mb-6">EM-Copilot · Azure AI Foundry powered</p>
 
         <form onSubmit={handleSubmit} className="grid gap-3">
           <label className="grid gap-1">
