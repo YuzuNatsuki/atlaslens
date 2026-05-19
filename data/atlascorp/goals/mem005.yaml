@@ -1,0 +1,10 @@
+- id: g-mem005-1
+  period: 2026-Q2
+  objective: E2E テスト自動化と CI 安定化により、リリース確度を引き上げる
+  key_results:
+  - Playwright による主要シナリオ 15 本のテスト自動化
+  - CI の Flaky テスト発生率を 8% → 3% に削減
+  - リリースブロッカー検知の平均時間を 1 営業日 → 2 時間以内に短縮
+  progress_pct: 30
+  status: at_risk
+  member_id: mem005

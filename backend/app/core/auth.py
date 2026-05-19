@@ -47,6 +47,7 @@ _DEMO_ACCOUNTS = [
     {"member_id": "mem002", "email": "suzuki.ryo@atlaslens.dev", "name": "鈴木 亮"},
     {"member_id": "mem003", "email": "yamamoto.yuka@atlaslens.dev", "name": "山本 由香"},
     {"member_id": "mem004", "email": "watanabe.sho@atlaslens.dev", "name": "渡辺 翔"},
+    {"member_id": "mem005", "email": "takahashi.yui@atlaslens.dev", "name": "高橋 結衣"},
 ]
 
 

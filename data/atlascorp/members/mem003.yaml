@@ -1,7 +1,7 @@
 id: mem003
 name: 山本 由香
 role: mid
-title: Frontend Engineer
+title: エンジニア（Frontend 課）
 joined_at: '2024-10-01'
 manager_id: em001
 skills:
@@ -12,4 +12,5 @@ skills:
 interests:
 - イラスト
 - 猫
-bio: フロントエンドのデザインシステム担当。UI コンポーネントの統一を進めている。
+bio: Frontend 課のエンジニア。前職はスタートアップでフロントエンドエンジニア 3 年。2024 年 10 月に中途入社し、現在はデザインシステム整備の専任担当としてButton
+  / Modal / Form などのコアコンポーネントを開発している。アクセシビリティ（WCAG AA 準拠）への関心が強く、社内のフロント技術発信も積極的に行っている。

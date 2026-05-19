@@ -144,6 +144,7 @@ SEED_DIVISIONS = [
 SEED_DEPARTMENTS = [
     Department(id="dept-sre",       division_id="div-platform", name="SRE 課",        head_member_id="mem001"),
     Department(id="dept-backend",   division_id="div-platform", name="Backend 課",    head_member_id="mem002"),
+    Department(id="dept-qa",        division_id="div-platform", name="QA 自動化 課",  head_member_id="mem005"),
     Department(id="dept-frontend",  division_id="div-product",  name="Frontend 課",   head_member_id="mem003"),
     Department(id="dept-onboarding",division_id="div-product",  name="新卒育成 課",   head_member_id="em001"),
 ]
@@ -151,6 +152,7 @@ SEED_DEPARTMENTS = [
 SEED_TEAMS = [
     Team(id="team-sre",       department_id="dept-sre",        name="SRE Team",            manager_member_id="mem001", member_ids=["mem001"]),
     Team(id="team-payment",   department_id="dept-backend",    name="Payment Team",        manager_member_id="mem002", member_ids=["mem002"]),
+    Team(id="team-qa",        department_id="dept-qa",         name="QA 自動化 Team",       manager_member_id="mem005", member_ids=["mem005"]),
     Team(id="team-design-sys",department_id="dept-frontend",   name="Design System Team",  manager_member_id="mem003", member_ids=["mem003"]),
     Team(id="team-newgrad",   department_id="dept-onboarding", name="新卒 Team",            manager_member_id="em001",  member_ids=["mem004"]),
 ]
@@ -163,6 +165,7 @@ MEMBER_ASSIGNMENTS: dict[str, dict[str, str | None | bool]] = {
     "mem002": {"team_id": "team-payment",    "manages_team_id": "team-payment",   "is_admin": False},
     "mem003": {"team_id": "team-design-sys", "manages_team_id": "team-design-sys","is_admin": False},
     "mem004": {"team_id": "team-newgrad",    "manages_team_id": None,             "is_admin": False},
+    "mem005": {"team_id": "team-qa",         "manages_team_id": "team-qa",        "is_admin": False},
 }
 
 

@@ -1,7 +1,7 @@
 id: mem001
 name: 佐藤 美咲
 role: tech_lead
-title: Tech Lead, Platform
+title: テックリード（SRE 課）
 joined_at: '2022-10-01'
 manager_id: em001
 skills:
@@ -12,4 +12,5 @@ skills:
 interests:
 - コーヒー焙煎
 - 推し活
-bio: SRE 出身のテックリード。プラットフォーム全体の信頼性とアーキの責任者。
+bio: SRE 課のテックリード。前職は外資系クラウドベンダーのカスタマーエンジニア。2022 年 10 月に中途入社し、入社半年でプラットフォーム全体の信頼性領域を担当。Kubernetes
+  と Terraform を中心に、可観測性とオンコール体制の整備をリードしている。技術リードの次のキャリアとして、エンジニアリングマネジメントにも関心を寄せている。

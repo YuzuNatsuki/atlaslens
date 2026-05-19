@@ -1,5 +1,4 @@
 - id: g-mem004-1
-  member_id: mem004
   period: 2026-Q2
   objective: 新卒オンボーディングを完遂し、初の機能リリースを担う
   key_results:
@@ -8,12 +7,4 @@
   - PR 自己レビューチェックリスト習慣化
   progress_pct: 20
   status: at_risk
-- id: g-mem004-2026-Q2-739c39
   member_id: mem004
-  period: 2026-Q2
-  objective: テスト目標
-  key_results:
-  - KR1
-  - KR2
-  progress_pct: 10
-  status: on_track

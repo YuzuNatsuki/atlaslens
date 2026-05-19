@@ -1,7 +1,7 @@
 id: mem002
 name: 鈴木 亮
 role: senior
-title: Senior Backend Engineer
+title: シニアエンジニア（Backend 課）
 joined_at: '2023-04-01'
 manager_id: em001
 skills:
@@ -12,4 +12,5 @@ skills:
 interests:
 - ボードゲーム
 - ランニング
-bio: バックエンドの主力。決済とユーザー基盤の API を担当。
+bio: Backend 課のシニアエンジニア。新卒で大手 SIer に 5 年在籍したのち、2023 年 4 月にアトラス株式会社へ中途入社。決済 API とユーザー基盤
+  API の主担当で、Go / gRPC / PostgreSQL を駆使した分散システム設計を得意とする。最近は新卒メンバーへのメンタリング機会が増えてきており、技術と育成の両軸でチームに貢献している。
