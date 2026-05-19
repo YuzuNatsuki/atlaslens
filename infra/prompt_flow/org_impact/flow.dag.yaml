@@ -50,7 +50,7 @@ nodes:
       path: comms_impact.jinja2
     inputs:
       deployment_name: gpt-4o
-      max_tokens: 600
+      max_tokens: 1400
       temperature: 0.3
       context: ${prepare_context.output}
     connection: atlaslens_aoai
@@ -63,7 +63,7 @@ nodes:
       path: knowledge_risks.jinja2
     inputs:
       deployment_name: gpt-4o
-      max_tokens: 600
+      max_tokens: 1400
       temperature: 0.3
       context: ${prepare_context.output}
     connection: atlaslens_aoai
@@ -76,7 +76,7 @@ nodes:
       path: workload_shifts.jinja2
     inputs:
       deployment_name: gpt-4o
-      max_tokens: 500
+      max_tokens: 1200
       temperature: 0.3
       context: ${prepare_context.output}
     connection: atlaslens_aoai
@@ -89,7 +89,7 @@ nodes:
       path: synthesize.jinja2
     inputs:
       deployment_name: gpt-4o
-      max_tokens: 600
+      max_tokens: 1500
       temperature: 0.3
       context: ${prepare_context.output}
       comms: ${comms_impact.output}
