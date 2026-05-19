@@ -47,6 +47,18 @@ def setup_tracing(service_name: str = "atlaslens-backend") -> bool:
 
         HTTPXClientInstrumentor().instrument()
 
+        # azure-core needs an OTel bridge before AIAgentsInstrumentor will
+        # emit any spans — without this its `start_span()` silently returns
+        # a no-op span. Once registered, every Foundry agent SDK call
+        # produces a real OTel span.
+        try:
+            from azure.core.settings import settings as az_settings
+            from azure.core.tracing.ext.opentelemetry_span import OpenTelemetrySpan
+
+            az_settings.tracing_implementation = OpenTelemetrySpan
+        except Exception as exc:  # noqa: BLE001
+            log.warning("azure-core OTel bridge registration failed: %s", exc)
+
         # GenAI semantic conventions for Foundry Agent Service runs.
         # `enable_content_recording=True` includes prompts + completions in
         # the span attributes so the Foundry Portal can render them. This is
