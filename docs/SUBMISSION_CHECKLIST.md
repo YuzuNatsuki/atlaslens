@@ -4,7 +4,7 @@
 
 **URL**: 新フロント Container App URL — `https://atlaslens-web.<env>.<region>.azurecontainerapps.io`（cd-infra apply 後に確定）  
 **旧 URL (参考)**: https://orange-pond-02df6f200.7.azurestaticapps.net  
-**EM アカウント**: `tanaka.ken@atlaslens.dev` / `atlaslens2026`
+**EM アカウント**: `tanaka.ken@atlaslens.dev` （パスワードは申請時に個別配付）
 
 | # | 操作 | 期待結果 | OK |
 |---|------|----------|-----|

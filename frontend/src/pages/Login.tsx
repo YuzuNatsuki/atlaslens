@@ -12,8 +12,6 @@ const DEMO_ACCOUNTS = [
   { label: "QA / 大阪", name: "高橋 結衣", email: "takahashi.yui@atlaslens.dev" },
 ];
 
-const DEMO_PASSWORD = "atlaslens2026";
-
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,7 +99,7 @@ export default function Login() {
                 autoComplete="current-password"
                 required
                 className="input"
-                placeholder="atlaslens2026"
+                placeholder="••••••••"
               />
             </label>
             {login.isError && (
@@ -119,16 +117,13 @@ export default function Login() {
           </form>
 
           <div className="mt-8 border-t border-slate-200 pt-5">
-            <p className="eyebrow mb-3">デモアカウント（クリックで反映）</p>
+            <p className="eyebrow mb-3">デモアカウント（クリックでメール反映）</p>
             <div className="grid gap-1.5">
               {DEMO_ACCOUNTS.map((a) => (
                 <button
                   key={a.email}
                   type="button"
-                  onClick={() => {
-                    setEmail(a.email);
-                    setPassword(DEMO_PASSWORD);
-                  }}
+                  onClick={() => setEmail(a.email)}
                   className="flex items-center justify-between gap-2 text-left text-sm
                              px-3 py-2 rounded-lg border border-slate-200 hover:border-brand/40
                              hover:bg-brand/5 transition"
@@ -142,7 +137,7 @@ export default function Login() {
               ))}
             </div>
             <p className="text-xs text-slate-400 mt-3">
-              初期パスワード: <code className="bg-slate-100 px-1.5 py-0.5 rounded">{DEMO_PASSWORD}</code>
+              パスワードは申請時に個別にお送りします。お持ちでない場合は運営にお問い合わせください。
             </p>
           </div>
         </div>

@@ -12,6 +12,7 @@ and returns the resolved `AuthContext`.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -63,8 +64,6 @@ def _load_credentials() -> dict[str, Credential]:
     Keeping all three layered means admin-created accounts work even when the
     seed YAML still sits on disk for local development.
     """
-    import os
-
     result: dict[str, Credential] = {}
 
     # 1. credentials.yaml file (legacy seed)
@@ -80,19 +79,23 @@ def _load_credentials() -> dict[str, Credential]:
             )
             result[cred.email.lower()] = cred
 
-    # 2. Hard-coded demo accounts (only filled in if not already present)
-    password = os.environ.get("DEMO_PASSWORD", "atlaslens2026")
-    salt = bcrypt.gensalt(rounds=10)
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-    for acc in _DEMO_ACCOUNTS:
-        key = acc["email"].lower()
-        if key not in result:
-            result[key] = Credential(
-                member_id=acc["member_id"],
-                email=acc["email"],
-                name=acc["name"],
-                password_hash=hashed,
-            )
+    # 2. Hard-coded demo accounts (only filled in if not already present).
+    #    The password is NEVER baked into the source — it must be supplied via
+    #    the DEMO_PASSWORD env var. When unset, demo accounts are skipped so
+    #    that the only way in is via real Cosmos-stored credentials.
+    password = os.environ.get("DEMO_PASSWORD")
+    if password:
+        salt = bcrypt.gensalt(rounds=10)
+        hashed = bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+        for acc in _DEMO_ACCOUNTS:
+            key = acc["email"].lower()
+            if key not in result:
+                result[key] = Credential(
+                    member_id=acc["member_id"],
+                    email=acc["email"],
+                    name=acc["name"],
+                    password_hash=hashed,
+                )
 
     # 3. Cosmos-managed accounts override everything else.
     try:
