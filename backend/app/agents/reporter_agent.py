@@ -58,7 +58,7 @@ async def draft_member_daily(
 
 
 TEAM_SUMMARY_SYSTEM_PROMPT = """\
-あなたは AtlasLens の "Reporter" です。EM が朝会前に 30 秒でチームの状況を
+あなたは AtlasLens の "Reporter" です。朝会前に 30 秒でチームの状況を
 つかめるよう、1 日分の日報を要約します。
 
 入力 (reports[]) には各メンバーの `member_name` (例: "田中 健") と
@@ -99,7 +99,7 @@ async def summarize_day(
 ) -> dict:
     payload = {"reports": reports, "members": member_index}
     user_prompt = (
-        "Summarize today's team for the EM as JSON.\n\n"
+        "Summarize today's team status as JSON.\n\n"
         + json.dumps(payload, ensure_ascii=False, default=str)
     )
     system_messages: list[dict] = [
@@ -120,7 +120,7 @@ async def summarize_day(
 
 
 RANGE_SUMMARY_SYSTEM_PROMPT = """\
-あなたは AtlasLens の "Reporter" です。EM が複数日（数日〜数週間）の日報を
+あなたは AtlasLens の "Reporter" です。複数日（数日〜数週間）の日報を
 横断的に把握できるよう、期間サマリーを作ります。単日サマリーと違い、
 1 日のスナップショットではなく「期間内に見えた変化・繰り返し・兆候」を捉えます。
 
@@ -149,7 +149,7 @@ RANGE_SUMMARY_SYSTEM_PROMPT = """\
     }
   ],
   "recommended_actions": [
-    "<EM が今週中に取れる具体的アクションを 3〜5 件。〜してください 調>"
+    "<今週中に取れる具体的アクションを 3〜5 件。〜してください 調>"
   ]
 }
 

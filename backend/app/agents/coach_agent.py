@@ -8,7 +8,7 @@ from app.core.azure_clients import chat_complete
 
 COACH_SYSTEM_PROMPT = """\
 あなたは AtlasLens の "Coach" です。日本のチームの 1on1 を支援するアシスタント
-として、EM がメンバーと面談する前の準備資料を作ります。
+として、メンバーと面談する前の準備資料を作ります。
 
 以下の JSON 形式で返してください。キーと構造は厳密に守り、人間向け文字列は
 自然な日本語の敬体で書きます。メンバーは「○○さん」と呼びます。
@@ -52,7 +52,7 @@ async def build_one_on_one_packet(context: dict) -> dict:
 
 
 MINUTES_SYSTEM_PROMPT = """\
-あなたは AtlasLens の "Coach" です。EM が 1on1 中に取った生メモを、後で読み
+あなたは AtlasLens の "Coach" です。1on1 中に取った生メモを、後で読み
 返しやすい構造化された議事録にまとめます。
 
 以下の JSON 形式で返してください。キーは厳密、値は自然な日本語の敬体：
@@ -61,21 +61,21 @@ MINUTES_SYSTEM_PROMPT = """\
   "summary": "<200字以内・面談全体の要約>",
   "key_topics": ["<60字以内の主要トピック>", ...],
   "decisions":  ["<80字以内の決定事項>", ...],
-  "todos":      [{"task": "<内容>", "owner": "<名前 or EM>", "due": "YYYY-MM-DD or null"}],
+  "todos":      [{"task": "<内容>", "owner": "<名前 or 自分>", "due": "YYYY-MM-DD or null"}],
   "follow_ups_for_next_time": ["<80字以内の次回フォロー>", ...]
 }
 
 ルール：
 - メモにない内容を勝手に追加しない。
 - 主観評価（〜が悪い、頑張ったなど）は避け、事実ベースで書く。
-- ToDo のオーナーは具体名で。曖昧なら "EM"。期限不明は null。
+- ToDo のオーナーは具体名で。記録者自身を指す場合は "自分"。期限不明は null。
 - 出力は JSON のみ。Markdown フェンスや前置きは付けない。
 """
 
 
 async def draft_minutes(raw_notes: str, em_id: str, member_id: str) -> dict:
     user_prompt = (
-        f"EM id: {em_id}\nMember id: {member_id}\n\n"
+        f"記録者の id: {em_id}\nメンバー id: {member_id}\n\n"
         "Convert the following raw notes into the JSON described in the system prompt.\n\n"
         "RAW NOTES:\n" + raw_notes
     )

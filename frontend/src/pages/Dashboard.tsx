@@ -17,7 +17,7 @@ import { useCurrentUser } from "@/lib/auth";
 import { EmptyState, SectionHeader, SkeletonCard } from "@/components/ui";
 
 const ROLE_LABEL: Record<string, string> = {
-  em: "EM",
+  em: "Standard",
   tech_lead: "テックリード",
   senior: "シニア",
   mid: "ミドル",
@@ -79,7 +79,7 @@ export default function Dashboard() {
                 {todayLabel}
               </div>
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1">
-                {greeting}、{userQ.data?.profile?.name ?? userQ.data?.name ?? "EM"} さん
+                {greeting}、{userQ.data?.profile?.name ?? userQ.data?.name ?? "あなた"} さん
               </h1>
               <p className="text-sm opacity-90 mt-1 max-w-2xl">
                 チーム（アトラス株式会社）の今を、AI が要約してお見せします。

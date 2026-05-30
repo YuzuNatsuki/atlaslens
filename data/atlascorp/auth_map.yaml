@@ -6,7 +6,7 @@
 # 運用上は AAD グループや SCIM でやるべきだが、ハッカソンデモではこの YAML で十分。
 
 mappings:
-  # オーナーは EM 役
+  # オーナーは管理者役
   kenc2180@gmail.com: em001
 
   # サンプル: 任意の人を Member 役にする場合

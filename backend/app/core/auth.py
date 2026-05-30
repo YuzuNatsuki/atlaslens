@@ -202,9 +202,10 @@ async def get_auth_context(
 
 
 async def require_em(auth: AuthContext) -> AuthContext:
-    # Admin implicitly satisfies EM permissions.
+    # Internal name kept ("em") for backwards compatibility; the user-facing
+    # error message no longer surfaces the role label.
     if auth.role not in ("em", "admin"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="EM access required")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied")
     return auth
 
 

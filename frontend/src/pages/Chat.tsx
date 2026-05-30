@@ -397,7 +397,7 @@ function FocusMembersPanel() {
 
   const addM = useMutation({
     mutationFn: () =>
-      api.addMemoryFocus(picker, reason || "EM 注目"),
+      api.addMemoryFocus(picker, reason || "注目中"),
     onSuccess: (m) => {
       qc.setQueryData(["agent-memory"], m);
       setPicker("");

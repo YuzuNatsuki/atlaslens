@@ -4,7 +4,7 @@ This makes the Simulator multi-agent: Plan → Act (run Prompt Flow) →
 Critique (this module) → Refine (synthesizer or full re-run). The Critic
 checks coverage (did we miss obvious workload shifts? knowledge owners?),
 consistency (does the timeline reflect the risks?), and tone (Japanese
-EM-friendly phrasing).
+team-lead-friendly phrasing).
 """
 
 from __future__ import annotations
@@ -16,13 +16,13 @@ from app.core.azure_clients import chat_complete
 
 CRITIC_PROMPT = """\
 あなたは「Critic」エージェントです。前段の Simulator が出した組織改編の影響予測
-JSON を読み、欠落・不整合・トーンの問題を客観的に指摘します。EM がその出力を
-読んだときに、判断材料として十分か・根拠と推論が整理されているか、の観点で
-見てください。
+JSON を読み、欠落・不整合・トーンの問題を客観的に指摘します。読み手がその
+出力を見たときに、判断材料として十分か・根拠と推論が整理されているか、の
+観点で見てください。
 
 評価軸：
 1. coverage: 重要な観点（報告・相談ライン／業務属人化／担当業務量／実施ステップ）
-   の網羅性。EM の判断に効くポイントが拾えているか。
+   の網羅性。判断に効くポイントが拾えているか。
 2. consistency: timeline_recommendation が communication_impacts / knowledge_risks /
    workload_shifts と整合しているか（例：リスクとして挙げた領域が実施ステップで
    ケアされているか）。

@@ -4,7 +4,7 @@ import { Compass } from "lucide-react";
 import { useLogin } from "@/lib/auth";
 
 const DEMO_ACCOUNTS = [
-  { label: "EM", name: "田中 健", email: "tanaka.ken@atlaslens.dev" },
+  { label: "Admin", name: "田中 健", email: "tanaka.ken@atlaslens.dev" },
   { label: "Tech Lead", name: "佐藤 美咲", email: "sato.misaki@atlaslens.dev" },
   { label: "Senior", name: "鈴木 亮", email: "suzuki.ryo@atlaslens.dev" },
   { label: "Mid", name: "山本 由香", email: "yamamoto.yuka@atlaslens.dev" },
@@ -40,7 +40,7 @@ export default function Login() {
           </p>
           <p className="mt-4 text-white/80 text-sm leading-relaxed">
             日報・1on1・OKR を横断する Agentic AI が、
-            EM の気づきと意思決定を 24 時間支えます。
+            気づきと意思決定を 24 時間支えます。
             Microsoft Azure AI Foundry 上でマルチエージェントが協調動作。
           </p>
           <ul className="mt-6 grid gap-2 text-sm">
@@ -75,7 +75,7 @@ export default function Login() {
           </div>
 
           <h1 className="page-title">ログイン</h1>
-          <p className="page-subtitle">EM-Copilot · Azure AI Foundry powered</p>
+          <p className="page-subtitle">Team Co-pilot · Azure AI Foundry powered</p>
 
           <form onSubmit={handleSubmit} className="grid gap-4 mt-6">
             <label className="grid gap-1">

@@ -267,7 +267,7 @@ export default function OneOnOnePage() {
                 value={todos}
                 onChange={(e) => setTodos(e.target.value)}
                 placeholder={
-                  "例: EM: 非同期連絡ルールを来週までに整理する\n本人: SLO ダッシュボードのドラフトを共有する"
+                  "例: あなた: 非同期連絡ルールを来週までに整理する\n本人: SLO ダッシュボードのドラフトを共有する"
                 }
                 className="textarea"
                 style={{ minHeight: 80 }}

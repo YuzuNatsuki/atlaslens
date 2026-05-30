@@ -1,7 +1,7 @@
 [project]
 name = "atlaslens-backend"
 version = "0.1.0"
-description = "AtlasLens backend — EM Co-pilot platform powered by Semantic Kernel on Azure"
+description = "AtlasLens backend — Team Co-pilot platform powered by Semantic Kernel on Azure"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

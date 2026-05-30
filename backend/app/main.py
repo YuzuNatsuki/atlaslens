@@ -50,7 +50,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="AtlasLens API",
     version="0.1.0",
-    description="EM Co-pilot platform — multi-agent Azure backend",
+    description="Team Co-pilot platform — multi-agent Azure backend",
     lifespan=lifespan,
 )
 instrument_fastapi(app)

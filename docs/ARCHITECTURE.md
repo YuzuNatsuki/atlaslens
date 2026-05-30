@@ -1,6 +1,6 @@
 # AtlasLens — Architecture
 
-EM のための Agentic AI Co-pilot。外部 SaaS 連携なしで、日報・1on1・OKR などのテキストデータを Azure 上のマルチエージェントが横断的に参照し、EM の「見落とし」を減らす。
+チーム運営のための Agentic AI Co-pilot。外部 SaaS 連携なしで、日報・1on1・OKR などのテキストデータを Azure 上のマルチエージェントが横断的に参照し、運営側の「見落とし」を減らす。
 
 ## System overview
 

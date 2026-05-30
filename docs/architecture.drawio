@@ -1,274 +1,222 @@
-<mxfile host="app.diagrams.net" agent="atlaslens" version="24.0.0">
-  <diagram id="atlaslens-architecture" name="AtlasLens 構成図">
-    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1020" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-
-        <!-- ===================== タイトル ===================== -->
-        <mxCell id="title" value="AtlasLens システム構成図（Azure 東日本リージョン）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#0F766E;" vertex="1" parent="1">
-          <mxGeometry x="40" y="16" width="1520" height="34" as="geometry" />
-        </mxCell>
-        <mxCell id="subtitle" value="EM 向け Agentic AI Co-pilot ― JWT 認証 / Cosmos DB 永続化 / Foundry エージェント / Prompt Flow / OpenTelemetry トレーシング" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#475569;" vertex="1" parent="1">
-          <mxGeometry x="40" y="50" width="1520" height="20" as="geometry" />
-        </mxCell>
-
-        <!-- ===================== 利用者 ===================== -->
-        <mxCell id="user" value="利用者（EM / メンバー）&#10;ブラウザ" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/general/Users.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="70" y="190" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <!-- ===================== Azure サブスクリプション 境界 ===================== -->
-        <mxCell id="azure_sub" value="Azure サブスクリプション ・ リソースグループ atlaslens-rg（東日本）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4FB;strokeColor=#0078D4;dashed=1;fontColor=#0F4C81;fontSize=13;fontStyle=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;" vertex="1" parent="1">
-          <mxGeometry x="200" y="100" width="1180" height="700" as="geometry" />
-        </mxCell>
-
-        <!-- ===================== Container Apps 環境 ===================== -->
-        <mxCell id="aca_env" value="Azure Container Apps 環境（atlaslens-env）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4FBFF;strokeColor=#0078D4;dashed=0;fontColor=#0F4C81;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="230" y="150" width="520" height="230" as="geometry" />
-        </mxCell>
-
-        <mxCell id="fe" value="フロントエンド Container App&#10;atlaslens-web（nginx + React SPA）" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/compute/Container_Instances.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="280" y="210" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="be" value="バックエンド Container App&#10;atlaslens-backend（FastAPI / Python 3.13）" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/compute/Container_Instances.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="560" y="210" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="proxy_note" value="/api/* をリバースプロキシ&#10;（同一オリジン・CORS 最小化）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#0F4C81;fontStyle=2;" vertex="1" parent="1">
-          <mxGeometry x="360" y="280" width="170" height="30" as="geometry" />
-        </mxCell>
-
-        <mxCell id="modules_note" value="モジュール：M1 メンバー360 / M2 日報サマリー（単日・期間）/ M3 1on1 支援 / M4 目標整合&#10;M5 組織シミュレーション / M6 チームヘルス / M7 管理ダッシュボード / M8 キャリアキャンバス / M9 成長サマリー&#10;AI アシスタント：8 ツール × 最大 4 ラウンドの自律ループ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0078D4;dashed=1;fontColor=#0F4C81;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="250" y="320" width="480" height="50" as="geometry" />
-        </mxCell>
-
-        <!-- ===================== AI サービス ===================== -->
-        <mxCell id="ai_lane" value="Azure AI サービス" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF6E9;strokeColor=#D29D34;dashed=0;fontColor=#7A4A00;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="790" y="150" width="560" height="230" as="geometry" />
-        </mxCell>
-
-        <mxCell id="aoai" value="Azure OpenAI&#10;gpt-4o / gpt-4o-mini / 埋め込み&#10;チャット・要約・Critic" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/ai_machine_learning/Azure_OpenAI.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="840" y="210" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="foundry" value="AI Foundry エージェントサービス&#10;Analyzer エージェント&#10;（スレッド / 実行）" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/ai_machine_learning/AI_Studio.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="1050" y="210" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="pflow" value="Foundry Prompt Flow&#10;組織影響シミュレーション（5 ノード）&#10;計画→実行→批評→改善" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/ai_machine_learning/AI_Studio.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="1260" y="210" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="search" value="Azure AI Search&#10;（プロビジョン済み・RAG は今後）" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/app_services/Search_Services.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;opacity=55;" vertex="1" parent="1">
-          <mxGeometry x="950" y="320" width="42" height="42" as="geometry" />
-        </mxCell>
-
-        <!-- ===================== データ & 監視 ===================== -->
-        <mxCell id="data_lane" value="データ &amp; 監視" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF7EC;strokeColor=#2EA44F;dashed=0;fontColor=#0E5A1F;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="230" y="410" width="1120" height="180" as="geometry" />
-        </mxCell>
-
-        <mxCell id="cosmos" value="Azure Cosmos DB（サーバーレス）&#10;プロフィール / 目標 / 日報 / 1on1 /&#10;会議 / 組織 / 認証 / AI 生成物" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/databases/Azure_Cosmos_DB.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="300" y="460" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="appi" value="Application Insights&#10;OpenTelemetry +&#10;AIAgentsInstrumentor" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/devops/Application_Insights.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="650" y="460" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="logs" value="Log Analytics ワークスペース&#10;バックエンド / エージェントの&#10;トレース集約・クエリ" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/analytics/Log_Analytics_Workspaces.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="980" y="460" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="idb" value="ブラウザ IndexedDB&#10;日報の書きかけを&#10;オフライン自動保存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2EA44F;dashed=1;fontColor=#0E5A1F;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="1180" y="455" width="150" height="60" as="geometry" />
-        </mxCell>
-
-        <!-- ===================== 基盤（認証 / レジストリ / CICD） ===================== -->
-        <mxCell id="ops_lane" value="認証基盤 ・ コンテナレジストリ ・ CI/CD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F1FA;strokeColor=#7B61FF;dashed=0;fontColor=#3F2E8F;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="230" y="620" width="1120" height="160" as="geometry" />
-        </mxCell>
-
-        <mxCell id="mi" value="マネージド ID&#10;（システム割り当て・RBAC）" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/identity/Managed_Identities.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="300" y="670" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="kv" value="Key Vault&#10;シークレット管理&#10;（JWT_SECRET 等）" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/security/Key_Vaults.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="560" y="670" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="acr" value="Container Registry&#10;atlaslensacrb6e5a1&#10;Docker イメージ" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/containers/Container_Registries.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" vertex="1" parent="1">
-          <mxGeometry x="830" y="670" width="48" height="48" as="geometry" />
-        </mxCell>
-
-        <mxCell id="gha" value="GitHub Actions（OIDC 連携）&#10;ci / cd-backend / cd-frontend / cd-infra&#10;Terraform apply ・ az acr build ・ containerapp update" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7B61FF;dashed=1;fontColor=#3F2E8F;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="1050" y="660" width="270" height="80" as="geometry" />
-        </mxCell>
-
-        <!-- ===================== 接続（実線=実行時 / 破線=制御・補助） ===================== -->
-
-        <!-- 利用者 → フロント -->
-        <mxCell id="e_user_fe" value="HTTPS / JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#0F766E;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#0F766E;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="user" target="fe">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- フロント → バックエンド -->
-        <mxCell id="e_fe_be" value="/api/* プロキシ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#0F766E;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#0F766E;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="fe" target="be">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- バックエンド → Azure OpenAI -->
-        <mxCell id="e_be_aoai" value="関数呼び出し" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.4;entryX=0;entryY=0.5;strokeColor=#D29D34;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#7A4A00;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="be" target="aoai">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- バックエンド → Foundry エージェント -->
-        <mxCell id="e_be_foundry" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.6;entryX=0;entryY=0.5;strokeColor=#D29D34;strokeWidth=2;endArrow=block;fontSize=10;" edge="1" parent="1" source="be" target="foundry">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="720" y="235" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- バックエンド → Prompt Flow -->
-        <mxCell id="e_be_pflow" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.75;entryX=0;entryY=0.5;strokeColor=#D29D34;strokeWidth=2;endArrow=block;fontSize=10;" edge="1" parent="1" source="be" target="pflow">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="745" y="250" />
-              <mxPoint x="1230" y="250" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- バックエンド → Cosmos -->
-        <mxCell id="e_be_cosmos" value="読み書き / AI 生成物" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#2EA44F;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#0E5A1F;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="be" target="cosmos">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="324" y="430" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- バックエンド → App Insights -->
-        <mxCell id="e_be_appi" value="テレメトリ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#68217A;strokeWidth=2;endArrow=block;dashed=1;fontSize=10;fontColor=#68217A;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="be" target="appi">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="674" y="440" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- Foundry → App Insights（GenAI トレース） -->
-        <mxCell id="e_foundry_appi" value="GenAI トレース" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#68217A;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;fontColor=#68217A;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="foundry" target="appi">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="1074" y="440" />
-              <mxPoint x="674" y="440" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- App Insights → Log Analytics -->
-        <mxCell id="e_appi_logs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#2EA44F;strokeWidth=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="appi" target="logs">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- フロント → IndexedDB -->
-        <mxCell id="e_fe_idb" value="下書き保存" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;strokeColor=#2EA44F;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;fontColor=#0E5A1F;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="fe" target="idb">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="304" y="540" />
-              <mxPoint x="1110" y="540" />
-              <mxPoint x="1110" y="485" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- バックエンド → マネージド ID -->
-        <mxCell id="e_be_mi" value="トークン取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#7B61FF;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;fontColor=#3F2E8F;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="be" target="mi">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="324" y="640" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- バックエンド → Key Vault -->
-        <mxCell id="e_be_kv" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.55;exitY=1;entryX=0.5;entryY=0;strokeColor=#7B61FF;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="be" target="kv">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="584" y="645" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- ACR → バックエンド（イメージ pull） -->
-        <mxCell id="e_acr_be" value="イメージ pull" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;strokeColor=#7B61FF;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;fontColor=#3F2E8F;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="acr" target="be">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="854" y="630" />
-              <mxPoint x="600" y="630" />
-              <mxPoint x="600" y="290" />
-              <mxPoint x="584" y="290" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-
-        <!-- GitHub Actions → ACR -->
-        <mxCell id="e_gha_acr" value="ビルド &amp; push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#7B61FF;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#3F2E8F;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="gha" target="acr">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- ===================== 凡例 ===================== -->
-        <mxCell id="legend_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#94A3B8;" vertex="1" parent="1">
-          <mxGeometry x="40" y="610" width="160" height="200" as="geometry" />
-        </mxCell>
-        <mxCell id="legend_title" value="凡例" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#0F766E;" vertex="1" parent="1">
-          <mxGeometry x="40" y="616" width="160" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="lg1c" value="" style="rounded=0;html=1;fillColor=#0F766E;strokeColor=#0F766E;" vertex="1" parent="1">
-          <mxGeometry x="56" y="646" width="22" height="3" as="geometry" />
-        </mxCell>
-        <mxCell id="lg1t" value="利用者リクエスト" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#0F766E;" vertex="1" parent="1">
-          <mxGeometry x="84" y="638" width="110" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="lg2c" value="" style="rounded=0;html=1;fillColor=#D29D34;strokeColor=#D29D34;" vertex="1" parent="1">
-          <mxGeometry x="56" y="676" width="22" height="3" as="geometry" />
-        </mxCell>
-        <mxCell id="lg2t" value="AI モデル呼び出し" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#7A4A00;" vertex="1" parent="1">
-          <mxGeometry x="84" y="668" width="110" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="lg3c" value="" style="rounded=0;html=1;fillColor=#2EA44F;strokeColor=#2EA44F;" vertex="1" parent="1">
-          <mxGeometry x="56" y="706" width="22" height="3" as="geometry" />
-        </mxCell>
-        <mxCell id="lg3t" value="データ永続化" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#0E5A1F;" vertex="1" parent="1">
-          <mxGeometry x="84" y="698" width="110" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="lg4c" value="" style="rounded=0;html=1;fillColor=#68217A;strokeColor=#68217A;" vertex="1" parent="1">
-          <mxGeometry x="56" y="736" width="22" height="3" as="geometry" />
-        </mxCell>
-        <mxCell id="lg4t" value="テレメトリ / トレース" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#68217A;" vertex="1" parent="1">
-          <mxGeometry x="84" y="728" width="110" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="lg5c" value="" style="rounded=0;html=1;fillColor=#7B61FF;strokeColor=#7B61FF;" vertex="1" parent="1">
-          <mxGeometry x="56" y="766" width="22" height="3" as="geometry" />
-        </mxCell>
-        <mxCell id="lg5t" value="認証 / CI/CD" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#3F2E8F;" vertex="1" parent="1">
-          <mxGeometry x="84" y="758" width="110" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="lg_note" value="実線：実行時の経路&#10;破線：制御・補助の経路" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#475569;" vertex="1" parent="1">
-          <mxGeometry x="52" y="784" width="140" height="24" as="geometry" />
-        </mxCell>
-
-        <!-- アイコン注記 -->
-        <mxCell id="icon_note" value="※ アイコンは draw.io 内蔵の Azure 公式アイコンセット（img/lib/azure2/*.svg）を使用。app.diagrams.net で開くと自動表示されます。" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#94A3B8;" vertex="1" parent="1">
-          <mxGeometry x="200" y="808" width="1180" height="20" as="geometry" />
-        </mxCell>
-
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="atlaslens-architecture" name="AtlasLens 構成図">
+        <mxGraphModel dx="632" dy="440" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1019" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="AtlasLens システム構成図（Azure 東日本リージョン）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#0F766E;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="16" width="1520" height="34" as="geometry"/>
+                </mxCell>
+                <mxCell id="subtitle" value="チーム運営向け Agentic AI Co-pilot ― JWT 認証 / Cosmos DB 永続化 / Foundry エージェント / Prompt Flow / OpenTelemetry トレーシング" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#475569;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="50" width="1520" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="azure_sub" value="Azure サブスクリプション ・ リソースグループ atlaslens-rg（東日本）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4FB;strokeColor=#0078D4;dashed=1;fontColor=#0F4C81;fontSize=13;fontStyle=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="100" width="1180" height="700" as="geometry"/>
+                </mxCell>
+                <mxCell id="aca_env" value="Azure Container Apps 環境（atlaslens-env）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4FBFF;strokeColor=#0078D4;dashed=0;fontColor=#0F4C81;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" parent="1" vertex="1">
+                    <mxGeometry x="230" y="150" width="520" height="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe" value="&lt;font color=&quot;#000000&quot;&gt;フロントエンド Container App&lt;br&gt;atlaslens-web（nginx + React SPA）&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/compute/Container_Instances.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="210" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="be" value="&lt;font color=&quot;#000000&quot;&gt;バックエンド Container App&lt;br&gt;atlaslens-backend（FastAPI / Python 3.13）&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/compute/Container_Instances.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="210" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="proxy_note" value="/api/* をリバースプロキシ&#10;（同一オリジン・CORS 最小化）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#0F4C81;fontStyle=2;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="280" width="170" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="modules_note" value="モジュール：M1 メンバー360 / M2 日報サマリー（単日・期間）/ M3 1on1 支援 / M4 目標整合&#10;M5 組織シミュレーション / M6 チームヘルス / M7 管理ダッシュボード / M8 キャリアキャンバス / M9 成長サマリー&#10;AI アシスタント：8 ツール × 最大 4 ラウンドの自律ループ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0078D4;dashed=1;fontColor=#0F4C81;fontSize=10;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="320" width="480" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="ai_lane" value="Azure AI サービス" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF6E9;strokeColor=#D29D34;dashed=0;fontColor=#7A4A00;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" parent="1" vertex="1">
+                    <mxGeometry x="790" y="150" width="560" height="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="pflow" value="&lt;font color=&quot;#000000&quot;&gt;Foundry Prompt Flow&lt;br&gt;組織影響シミュレーション（5 ノード）&lt;br&gt;計画→実行→批評→改善&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/ai_machine_learning/AI_Studio.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="210" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="search" value="Azure AI Search&#10;（プロビジョン済み・RAG は今後）" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/app_services/Search_Services.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;opacity=55;" parent="1" vertex="1">
+                    <mxGeometry x="950" y="320" width="42" height="42" as="geometry"/>
+                </mxCell>
+                <mxCell id="data_lane" value="データ &amp; 監視" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF7EC;strokeColor=#2EA44F;dashed=0;fontColor=#0E5A1F;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" parent="1" vertex="1">
+                    <mxGeometry x="230" y="410" width="1120" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="cosmos" value="&lt;font color=&quot;#000000&quot;&gt;Azure Cosmos DB（サーバーレス）&lt;br&gt;プロフィール / 目標 / 日報 / 1on1 /&lt;br&gt;会議 / 組織 / 認証 / AI 生成物&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/databases/Azure_Cosmos_DB.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="460" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="" style="edgeStyle=none;html=1;fontColor=#000000;" parent="1" source="appi" target="ops_lane" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="appi" value="&lt;font color=&quot;#000000&quot;&gt;Application Insights&lt;br&gt;OpenTelemetry +&lt;br&gt;AIAgentsInstrumentor&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/devops/Application_Insights.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="460" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="logs" value="&lt;font color=&quot;#000000&quot;&gt;Log Analytics ワークスペース&lt;br&gt;バックエンド / エージェントの&lt;br&gt;トレース集約・クエリ&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/analytics/Log_Analytics_Workspaces.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="980" y="460" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="idb" value="ブラウザ IndexedDB&#10;日報の書きかけを&#10;オフライン自動保存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2EA44F;dashed=1;fontColor=#0E5A1F;fontSize=10;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="1180" y="455" width="150" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="ops_lane" value="認証基盤 ・ コンテナレジストリ ・ CI/CD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F1FA;strokeColor=#7B61FF;dashed=0;fontColor=#3F2E8F;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" parent="1" vertex="1">
+                    <mxGeometry x="230" y="620" width="1120" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="mi" value="&lt;font color=&quot;#000000&quot;&gt;マネージド ID&lt;br&gt;（システム割り当て・RBAC）&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/identity/Managed_Identities.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="670" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="kv" value="&lt;font color=&quot;#000000&quot;&gt;Key Vault&lt;br&gt;シークレット管理&lt;br&gt;（JWT_SECRET 等）&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/security/Key_Vaults.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="670" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="acr" value="&lt;font color=&quot;#000000&quot;&gt;Container Registry&lt;br&gt;atlaslensacrb6e5a1&lt;br&gt;Docker イメージ&lt;/font&gt;" style="sketch=0;html=1;points=[];align=center;image;fontSize=11;image=img/lib/azure2/containers/Container_Registries.svg;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="830" y="670" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="gha" value="GitHub Actions（OIDC 連携）&#10;ci / cd-backend / cd-frontend / cd-infra&#10;Terraform apply ・ az acr build ・ containerapp update" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7B61FF;dashed=1;fontColor=#3F2E8F;fontSize=10;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="1050" y="660" width="270" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_user_fe" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;strokeColor=#0F766E;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#0F766E;labelBackgroundColor=#FFFFFF;" parent="1" source="3" target="fe" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="118" y="214" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_fe_be" value="/api/* プロキシ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#0F766E;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#0F766E;labelBackgroundColor=#FFFFFF;" parent="1" source="fe" target="be" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_be_aoai" value="関数呼び出し" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.4;entryX=0;entryY=0.5;strokeColor=#D29D34;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#7A4A00;labelBackgroundColor=#FFFFFF;" parent="1" source="be" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="840" y="234" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_be_foundry" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.6;entryX=0;entryY=0.5;strokeColor=#D29D34;strokeWidth=2;endArrow=block;fontSize=10;startArrow=none;" parent="1" source="5" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="720" y="235"/>
+                        </Array>
+                        <mxPoint x="1050.0000000000002" y="234" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_be_pflow" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.75;entryX=0;entryY=0.5;strokeColor=#D29D34;strokeWidth=2;endArrow=block;fontSize=10;" parent="1" source="be" target="pflow" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="745" y="250"/>
+                            <mxPoint x="1230" y="250"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_be_cosmos" value="読み書き / AI 生成物" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#2EA44F;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#0E5A1F;labelBackgroundColor=#FFFFFF;" parent="1" source="be" target="cosmos" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="324" y="430"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_be_appi" value="テレメトリ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#68217A;strokeWidth=2;endArrow=block;dashed=1;fontSize=10;fontColor=#68217A;labelBackgroundColor=#FFFFFF;" parent="1" source="be" target="appi" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="674" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_foundry_appi" value="GenAI トレース" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#68217A;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;fontColor=#68217A;labelBackgroundColor=#FFFFFF;" parent="1" target="appi" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1074" y="440"/>
+                            <mxPoint x="674" y="440"/>
+                        </Array>
+                        <mxPoint x="1074.0000000000002" y="258" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_appi_logs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#2EA44F;strokeWidth=1;endArrow=block;fontSize=10;" parent="1" source="appi" target="logs" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_fe_idb" value="下書き保存" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;strokeColor=#2EA44F;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;fontColor=#0E5A1F;labelBackgroundColor=#FFFFFF;" parent="1" source="fe" target="idb" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="304" y="540"/>
+                            <mxPoint x="1110" y="540"/>
+                            <mxPoint x="1110" y="485"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_be_mi" value="トークン取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#7B61FF;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;fontColor=#3F2E8F;labelBackgroundColor=#FFFFFF;" parent="1" source="be" target="mi" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="324" y="640"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_be_kv" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.55;exitY=1;entryX=0.5;entryY=0;strokeColor=#7B61FF;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;" parent="1" source="be" target="kv" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="584" y="645"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_acr_be" value="イメージ pull" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;strokeColor=#7B61FF;strokeWidth=1;dashed=1;endArrow=block;fontSize=10;fontColor=#3F2E8F;labelBackgroundColor=#FFFFFF;" parent="1" source="acr" target="be" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="854" y="630"/>
+                            <mxPoint x="600" y="630"/>
+                            <mxPoint x="600" y="290"/>
+                            <mxPoint x="584" y="290"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_gha_acr" value="ビルド &amp; push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#7B61FF;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#3F2E8F;labelBackgroundColor=#FFFFFF;" parent="1" source="gha" target="acr" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#94A3B8;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="610" width="160" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_title" value="凡例" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#0F766E;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="616" width="160" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg1c" value="" style="rounded=0;html=1;fillColor=#0F766E;strokeColor=#0F766E;" parent="1" vertex="1">
+                    <mxGeometry x="56" y="646" width="22" height="3" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg1t" value="利用者リクエスト" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#0F766E;" parent="1" vertex="1">
+                    <mxGeometry x="84" y="638" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg2c" value="" style="rounded=0;html=1;fillColor=#D29D34;strokeColor=#D29D34;" parent="1" vertex="1">
+                    <mxGeometry x="56" y="676" width="22" height="3" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg2t" value="AI モデル呼び出し" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#7A4A00;" parent="1" vertex="1">
+                    <mxGeometry x="84" y="668" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg3c" value="" style="rounded=0;html=1;fillColor=#2EA44F;strokeColor=#2EA44F;" parent="1" vertex="1">
+                    <mxGeometry x="56" y="706" width="22" height="3" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg3t" value="データ永続化" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#0E5A1F;" parent="1" vertex="1">
+                    <mxGeometry x="84" y="698" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg4c" value="" style="rounded=0;html=1;fillColor=#68217A;strokeColor=#68217A;" parent="1" vertex="1">
+                    <mxGeometry x="56" y="736" width="22" height="3" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg4t" value="テレメトリ / トレース" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#68217A;" parent="1" vertex="1">
+                    <mxGeometry x="84" y="728" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg5c" value="" style="rounded=0;html=1;fillColor=#7B61FF;strokeColor=#7B61FF;" parent="1" vertex="1">
+                    <mxGeometry x="56" y="766" width="22" height="3" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg5t" value="認証 / CI/CD" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#3F2E8F;" parent="1" vertex="1">
+                    <mxGeometry x="84" y="758" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="lg_note" value="実線：実行時の経路&#10;破線：制御・補助の経路" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#475569;" parent="1" vertex="1">
+                    <mxGeometry x="52" y="784" width="140" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="&lt;span style=&quot;font-size: 11px;&quot;&gt;利用者（管理者 / メンバー）&lt;/span&gt;&lt;br style=&quot;border-color: rgb(218, 220, 224); font-size: 11px;&quot;&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;ブラウザ&lt;/span&gt;" style="aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/azure2/identity/Users.svg;labelBackgroundColor=none;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="56" y="208" width="45.71" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="AI Foundry エージェントサービス&#10;Analyzer エージェント&#10;（スレッド / 実行）" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCIgaGVpZ2h0PSIxOCIgd2lkdGg9IjE4IiBpZD0idXVpZC02YjgzODBjMy0wZWU1LTRjNDQtOTJhMi1mMTg1YzgyZGI2YmEiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgZ3JhZGllbnRUcmFuc2Zvcm09InRyYW5zbGF0ZSg2MTcuMTI2IC0yMDUuNzU4KSBzY2FsZSgxIC0xKSIgeTI9Ii0yMDYuMjIiIHgyPSItNjA2LjYiIHkxPSItMjE4LjM3OCIgeDE9Ii02MDMuNTYzIiBpZD0idXVpZC0wNTg3NmM3Mi04ZjI2LTQwZGEtOTk2ZS1hNDg4MTcyZWMwNzIiPjxzdG9wIHN0b3AtY29sb3I9IiM3MTI1NzUiIG9mZnNldD0iMCIvPjxzdG9wIHN0b3AtY29sb3I9IiM5YTI4ODQiIG9mZnNldD0iLjA5Ii8+PHN0b3Agc3RvcC1jb2xvcj0iI2JmMmM5MiIgb2Zmc2V0PSIuMTgiLz48c3RvcCBzdG9wLWNvbG9yPSIjZGEyZTljIiBvZmZzZXQ9Ii4yNyIvPjxzdG9wIHN0b3AtY29sb3I9IiNlYjMwYTIiIG9mZnNldD0iLjM0Ii8+PHN0b3Agc3RvcC1jb2xvcj0iI2YxMzFhNSIgb2Zmc2V0PSIuNCIvPjxzdG9wIHN0b3AtY29sb3I9IiNlYzMwYTMiIG9mZnNldD0iLjUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZGYyZjllIiBvZmZzZXQ9Ii42MSIvPjxzdG9wIHN0b3AtY29sb3I9IiNjOTJkOTYiIG9mZnNldD0iLjcyIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2FhMmE4YSIgb2Zmc2V0PSIuODMiLz48c3RvcCBzdG9wLWNvbG9yPSIjODMyNjdjIiBvZmZzZXQ9Ii45NSIvPjxzdG9wIHN0b3AtY29sb3I9IiM3MTI1NzUiIG9mZnNldD0iMSIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKDYxNy4xMjYgLTIwNS43NTgpIHNjYWxlKDEgLTEpIiB5Mj0iLTIyMy4xNzUiIHgyPSItNjAyLjQxMiIgeTE9Ii0yMDYuMDI1IiB4MT0iLTYwMi40MTIiIGlkPSJ1dWlkLWM0YTJmNjI3LWQ3MzAtNDQ3ZS05MTUyLTYyMDA5YzY0YzM2MSI+PHN0b3Agc3RvcC1jb2xvcj0iI2RhN2VkMCIgb2Zmc2V0PSIwIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2IxN2JkNSIgb2Zmc2V0PSIuMDgiLz48c3RvcCBzdG9wLWNvbG9yPSIjODc3OGRiIiBvZmZzZXQ9Ii4xOSIvPjxzdG9wIHN0b3AtY29sb3I9IiM2Mjc2ZTEiIG9mZnNldD0iLjMiLz48c3RvcCBzdG9wLWNvbG9yPSIjNDU3NGU1IiBvZmZzZXQ9Ii40MSIvPjxzdG9wIHN0b3AtY29sb3I9IiMyZTcyZTgiIG9mZnNldD0iLjU0Ii8+PHN0b3Agc3RvcC1jb2xvcj0iIzFkNzFlYiIgb2Zmc2V0PSIuNjciLz48c3RvcCBzdG9wLWNvbG9yPSIjMTQ3MWVjIiBvZmZzZXQ9Ii44MSIvPjxzdG9wIHN0b3AtY29sb3I9IiMxMTcxZWQiIG9mZnNldD0iMSIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKDYxNy4xMjYgLTIwNS43NTgpIHNjYWxlKDEgLTEpIiB5Mj0iLTIyNC42NDQiIHgyPSItNjE0LjgwNyIgeTE9Ii0yMDYuNDE0IiB4MT0iLTYwMy40MzgiIGlkPSJ1dWlkLTVhNGNmMjE1LTQ5MzItNGYxMi04YWYxLTFiNjgzM2RmMjU5YyI+PHN0b3Agc3RvcC1jb2xvcj0iI2RhN2VkMCIgb2Zmc2V0PSIwIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2I3N2JkNCIgb2Zmc2V0PSIuMDUiLz48c3RvcCBzdG9wLWNvbG9yPSIjOTA3OWRhIiBvZmZzZXQ9Ii4xMSIvPjxzdG9wIHN0b3AtY29sb3I9IiM2ZTc3ZGYiIG9mZnNldD0iLjE4Ii8+PHN0b3Agc3RvcC1jb2xvcj0iIzUxNzVlMyIgb2Zmc2V0PSIuMjUiLz48c3RvcCBzdG9wLWNvbG9yPSIjMzk3M2U3IiBvZmZzZXQ9Ii4zMyIvPjxzdG9wIHN0b3AtY29sb3I9IiMyNzcyZTkiIG9mZnNldD0iLjQyIi8+PHN0b3Agc3RvcC1jb2xvcj0iIzFhNzFlYiIgb2Zmc2V0PSIuNTQiLz48c3RvcCBzdG9wLWNvbG9yPSIjMTM3MWVjIiBvZmZzZXQ9Ii42OCIvPjxzdG9wIHN0b3AtY29sb3I9IiMxMTcxZWQiIG9mZnNldD0iMSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxwYXRoIHN0cm9rZS13aWR0aD0iMCIgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsPSJ1cmwoI3V1aWQtMDU4NzZjNzItOGYyNi00MGRhLTk5NmUtYTQ4ODE3MmVjMDcyKSIgZD0ibTEyLjA2MS4wMTJjLjUzNCwwLDEuMDA4LjQwMSwxLjE3OC45ODRzMS4xNjYsNC4xOSwxLjE2Niw0LjE5djcuMTY2aC0zLjYwN2wuMDczLTEyLjM1MmgxLjE5di4wMTJaIi8+PHBhdGggc3Ryb2tlLXdpZHRoPSIwIiBmaWxsPSJ1cmwoI3V1aWQtYzRhMmY2MjctZDczMC00NDdlLTkxNTItNjIwMDljNjRjMzYxKSIgZD0ibTE3LjM1Niw1LjYxMWMwLS4yNTUtLjIwNi0uNDQ5LS40NDktLjQ0OWgtMi4xMjZjLTEuNDk0LDAtMi43MDksMS4yMTUtMi43MDksMi43MDl2NC40OTRoMi41NzVjMS40OTQsMCwyLjcwOS0xLjIxNSwyLjcwOS0yLjcwOXYtNC4wNDVaIi8+PHBhdGggc3Ryb2tlLXdpZHRoPSIwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9InVybCgjdXVpZC01YTRjZjIxNS00OTMyLTRmMTItOGFmMS0xYjY4MzNkZjI1OWMpIiBkPSJtMTIuMDYxLjAxMmMtLjQxMywwLS43NDEuMzI4LS43NDEuNzQxbC0uMDczLDEzLjY0YzAsMS45OTItMS42MTUsMy42MDctMy42MDcsMy42MDdIMS4wOTNjLS4zMTYsMC0uNTIyLS4zMDQtLjQyNS0uNTk1TDUuOTE1LDIuNDI5QzYuNDI1Ljk4NCw3Ljc4NS4wMTIsOS4zMTYuMDEyaDIuNzU3LS4wMTJaIi8+PC9zdmc+;" vertex="1" parent="1">
+                    <mxGeometry x="1050" y="210" width="44" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.6;entryX=0;entryY=0.5;strokeColor=#D29D34;strokeWidth=2;endArrow=none;fontSize=10;" edge="1" parent="1" source="be" target="5">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points"/>
+                        <mxPoint x="607.9999999999998" y="238.79999999999995" as="sourcePoint"/>
+                        <mxPoint x="1050.0000000000002" y="234" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="5" value="Azure OpenAI&#10;gpt-4o / gpt-4o-mini / 埋め込み&#10;チャット・要約・Critic" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCIgaGVpZ2h0PSIxOCIgd2lkdGg9IjE4IiBpZD0idXVpZC1hZGJkYWU4ZS01YTQxLTQ2ZDEtOGMxOC1hYTczY2RiZmVlMzIiPjxkZWZzPjxyYWRpYWxHcmFkaWVudCBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgZ3JhZGllbnRUcmFuc2Zvcm09InRyYW5zbGF0ZSgtMTc5MzkuMDMgMjAzNjguMDI5KSByb3RhdGUoNDUpIHNjYWxlKDI1LjA5MSAtMzQuMTQ5KSIgcj0iLjQ1IiBjeT0iNzkzLjE5OSIgY3g9Ii02Ny45ODEiIGlkPSJ1dWlkLTJhNzQwN2FhLWI3ODctNDhkZC1hOTZhLTBkODFhYjZlOTNiYiI+PHN0b3Agc3RvcC1jb2xvcj0iIzgzYjlmOSIgb2Zmc2V0PSIwIi8+PHN0b3Agc3RvcC1jb2xvcj0iIzAwNzhkNCIgb2Zmc2V0PSIxIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PHBhdGggc3Ryb2tlLXdpZHRoPSIwIiBmaWxsPSJ1cmwoI3V1aWQtMmE3NDA3YWEtYjc4Ny00OGRkLWE5NmEtMGQ4MWFiNmU5M2JiKSIgZD0ibTAsMi43djEyLjZjMCwxLjQ5MSwxLjIwOSwyLjcsMi43LDIuN2gxMi42YzEuNDkxLDAsMi43LTEuMjA5LDIuNy0yLjdWMi43YzAtMS40OTEtMS4yMDktMi43LTIuNy0yLjdIMi43QzEuMjA5LDAsMCwxLjIwOSwwLDIuN1pNMTAuOCwwdjMuNmMwLDMuOTc2LDMuMjI0LDcuMiw3LjIsNy4yaC0zLjZjLTMuOTc2LDAtNy4xOTksMy4yMjItNy4yLDcuMTk4di0zLjU5OGMwLTMuOTc2LTMuMjI0LTcuMi03LjItNy4yaDMuNmMzLjk3NiwwLDcuMi0zLjIyNCw3LjItNy4yWiIvPjwvc3ZnPg==;" vertex="1" parent="1">
+                    <mxGeometry x="844" y="213" width="40" height="40" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>

@@ -72,7 +72,7 @@ export default function AdminPage() {
 // ============================================================
 
 const ROLE_LABEL: Record<string, string> = {
-  em: "EM",
+  em: "Standard",
   tech_lead: "テックリード",
   senior: "シニア",
   mid: "ミドル",
@@ -294,7 +294,7 @@ function DashboardPanel() {
           {d.ai.recent.length === 0 ? (
             <EmptyState
               title="まだ AI 生成履歴がありません"
-              description="EM が日報サマリーを生成すると、ここに表示されます。"
+              description="日報サマリーが生成されると、ここに表示されます。"
             />
           ) : (
             <ul className="grid gap-1.5 text-sm">
@@ -905,7 +905,7 @@ function MembersPanel() {
           </p>
           <p className="mt-1 font-mono text-base">{pwReveal.password}</p>
           <p className="text-xs text-amber-700 mt-1">
-            この値は再表示できません。EMからメンバーへ安全に伝えてください。
+            この値は再表示できません。安全な手段でメンバーへ伝えてください。
           </p>
           <button onClick={() => setPwReveal(null)} className="btn-ghost mt-2 text-xs">
             閉じる
@@ -1050,7 +1050,7 @@ function MemberForm({
         </Field>
         <Field label="ロール">
           <select value={role} onChange={(e) => setRole(e.target.value)} className="input">
-            <option value="em">EM</option>
+            <option value="em">Standard</option>
             <option value="tech_lead">Tech Lead</option>
             <option value="senior">Senior</option>
             <option value="mid">Mid</option>

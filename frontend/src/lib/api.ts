@@ -65,7 +65,7 @@ export const api = {
   clearChatHistory: () =>
     authedFetch<void>("/api/chat/history", { method: "DELETE" }),
 
-  // ---- agent memory (EM-scoped) ----
+  // ---- agent memory (user-scoped) ----
   agentMemory: () => authedFetch<AgentMemory>("/api/me/memory"),
   addMemoryFocus: (member_id: string, reason: string) =>
     authedFetch<AgentMemory>("/api/me/memory/focus", {

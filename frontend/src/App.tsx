@@ -48,35 +48,35 @@ const emNav: NavItem[] = [
     label: "ダッシュボード",
     hint: "チーム全員の状況",
     icon: LayoutDashboard,
-    section: "EM 向け",
+    section: "チーム運営",
   },
   {
     to: "/daily-pulse",
     label: "日報サマリー",
     hint: "AI 要約 + 履歴",
     icon: CalendarDays,
-    section: "EM 向け",
+    section: "チーム運営",
   },
   {
     to: "/simulator",
     label: "組織シミュレーション",
     hint: "体制変更の影響を AI が整理",
     icon: Compass,
-    section: "EM 向け",
+    section: "チーム運営",
   },
   {
     to: "/chat",
     label: "AI アシスタント",
     hint: "チームの状況について質問",
     icon: MessageSquare,
-    section: "EM 向け",
+    section: "チーム運営",
   },
   {
     to: "/followups",
     label: "フォローアップ",
     hint: "AI 示唆の PDCA 追跡",
     icon: CheckSquare,
-    section: "EM 向け",
+    section: "チーム運営",
   },
 ];
 
@@ -201,20 +201,20 @@ function BrandBlock() {
         <div className="text-base font-bold tracking-tight text-slate-900">
           AtlasLens
         </div>
-        <div className="text-[11px] text-slate-500">EM Co-pilot</div>
+        <div className="text-[11px] text-slate-500">Team Co-pilot</div>
       </div>
     </div>
   );
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const label =
-    role === "admin" ? "Admin" : role === "em" ? "EM-Copilot" : "メンバー";
+  // Show only the system-level distinction (admin vs the rest). Drop the
+  // "EM/manager" terminology from the UI so the surface stays role-agnostic.
+  if (role !== "admin" && role !== "member") return null;
+  const label = role === "admin" ? "Admin" : "メンバー";
   const tone =
     role === "admin"
       ? "bg-rose-100 text-rose-700 border-rose-200"
-      : role === "em"
-      ? "bg-brand/10 text-brand-dark border-brand/20"
       : "bg-slate-100 text-slate-600 border-slate-200";
   return (
     <span
@@ -410,7 +410,7 @@ function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10 py-3 text-xs text-slate-400 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-        <span>AtlasLens — EM Co-pilot powered by Azure AI Foundry</span>
+        <span>AtlasLens — Team Co-pilot powered by Azure AI Foundry</span>
       </div>
     </footer>
   );

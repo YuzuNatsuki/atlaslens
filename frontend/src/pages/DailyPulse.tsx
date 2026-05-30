@@ -239,7 +239,7 @@ function SingleDayPanel() {
               <div className="card border-amber-200 bg-amber-50/40">
                 <h3 className="section-title text-amber-800 mb-2">
                   <AlertTriangle size={16} className="text-amber-600" />{" "}
-                  EM が今日声をかけたい人
+                  今日声をかけたい人
                 </h3>
                 <ul className="grid gap-2 text-sm">
                   {Object.entries(summary.summary.blockers_to_surface).map(([k, v]) => (
@@ -605,7 +605,7 @@ function RangeResult({ summary }: { summary: TeamRangeSummary }) {
       {s?.recommended_actions && s.recommended_actions.length > 0 && (
         <div className="card border-brand/20 bg-brand/5">
           <h3 className="section-title text-brand-dark mb-2">
-            <Lightbulb size={16} className="text-brand" /> EM の次の一手
+            <Lightbulb size={16} className="text-brand" /> 次の一手
           </h3>
           <ul className="list-disc ml-5 text-sm grid gap-1 text-slate-700">
             {s.recommended_actions.map((t, i) => (

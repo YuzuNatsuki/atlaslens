@@ -102,7 +102,7 @@ export default function FollowupsPage() {
     <div className="grid gap-6">
       <PageHeader
         title="フォローアップ"
-        subtitle="AI が示唆したシグナル（離職リスク・対人摩擦・成長停滞など）に対して、EM がどのように動いたかを記録し PDCA を回します。"
+        subtitle="AI が示唆したシグナル（離職リスク・対人摩擦・成長停滞など）に対して、どう対応したかを記録し PDCA を回します。"
       />
 
       <div className="flex flex-wrap items-center gap-2 text-xs">

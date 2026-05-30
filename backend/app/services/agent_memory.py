@@ -166,7 +166,7 @@ def format_for_prompt(
     if not focus and not topics and not prefs:
         return ""
 
-    lines: list[str] = ["[EM の共有メモリ — 各エージェントが参照しています]"]
+    lines: list[str] = ["[ユーザーの共有メモリ — 各エージェントが参照しています]"]
 
     if focus:
         rendered = []
@@ -180,7 +180,7 @@ def format_for_prompt(
         lines.extend(rendered)
 
     if topics:
-        lines.append("直近 EM が確認した話題:")
+        lines.append("直近ユーザーが確認した話題:")
         for t in topics[:5]:
             if isinstance(t, dict) and t.get("topic"):
                 lines.append(f"- {t['topic']}")
@@ -188,6 +188,6 @@ def format_for_prompt(
     if prefs:
         flat = ", ".join(f"{k}={v}" for k, v in prefs.items() if v is not None)
         if flat:
-            lines.append(f"EM の好み: {flat}")
+            lines.append(f"ユーザーの好み: {flat}")
 
     return "\n".join(lines)

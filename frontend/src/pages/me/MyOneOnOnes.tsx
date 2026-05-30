@@ -26,7 +26,7 @@ export default function MyOneOnOnes() {
   const saveM = useMutation({
     mutationFn: () => meApi.savePrepNotes(notes),
     onSuccess: () => {
-      setStatusMsg("保存しました。次回の 1on1 で EM が参照できます。");
+      setStatusMsg("保存しました。次回の 1on1 の前に参照されます。");
       qc.invalidateQueries({ queryKey: ["me", "prep"] });
     },
   });
@@ -42,7 +42,7 @@ export default function MyOneOnOnes() {
         <SectionHeader
           icon={<NotebookPen size={16} className="text-brand" />}
           title="次回 1on1 で話したいこと"
-          subtitle="このメモは EM の面談前の資料に反映されます。いつでも更新できます。"
+          subtitle="このメモは次回 1on1 の準備資料に反映されます。いつでも更新できます。"
         />
         <textarea
           value={notes}
@@ -81,7 +81,7 @@ export default function MyOneOnOnes() {
         {historyQ.data && historyQ.data.one_on_ones.length === 0 && (
           <EmptyState
             title="まだ 1on1 の記録がありません"
-            description="EM が記録すると、ここに表示されます。"
+            description="1on1 が記録されると、ここに表示されます。"
           />
         )}
         <div className="grid gap-3">
