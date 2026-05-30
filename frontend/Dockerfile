@@ -28,7 +28,7 @@ COPY frontend/ ./
 # forwards /api/* server-side).
 ENV VITE_API_BASE=""
 
-RUN pnpm run build
+RUN ./node_modules/.bin/tsc -b && ./node_modules/.bin/vite build
 
 # ---------- runtime ----------
 FROM nginx:1.27-alpine AS runtime
