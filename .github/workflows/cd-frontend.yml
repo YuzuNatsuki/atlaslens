@@ -22,6 +22,7 @@ concurrency:
 
 env:
   RG: atlaslens-rg
+  ENV_NAME: atlaslens-env
   BACKEND_APP: atlaslens-backend
   FRONTEND_APP: atlaslens-web
   IMAGE: atlaslens-frontend
@@ -65,8 +66,23 @@ jobs:
         id: ensure_app
         run: |
           if ! az containerapp show -g "${{ env.RG }}" -n "${{ env.FRONTEND_APP }}" >/dev/null 2>&1; then
-            echo "Frontend Container App does not exist yet — bootstrap it via 'terraform apply' (cd-infra)." >&2
-            exit 1
+            echo "Frontend Container App does not exist yet — creating it now."
+            REGISTRY_PASSWORD=$(az acr credential show \
+              -n "${{ steps.vars.outputs.acr }}" \
+              --query "passwords[0].value" -o tsv)
+
+            az containerapp create \
+              -g "${{ env.RG }}" -n "${{ env.FRONTEND_APP }}" \
+              --environment "${{ env.ENV_NAME }}" \
+              --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
+              --target-port 8080 \
+              --ingress external \
+              --registry-server "${{ steps.vars.outputs.login }}" \
+              --registry-username "${{ steps.vars.outputs.acr }}" \
+              --registry-password "$REGISTRY_PASSWORD" \
+              --env-vars BACKEND_URL=${{ steps.vars.outputs.backend }} PORT=8080 \
+              --min-replicas 0 \
+              --max-replicas 2
           fi
 
       - name: Update frontend Container App image
