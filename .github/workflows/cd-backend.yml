@@ -57,42 +57,40 @@ jobs:
             --file backend/Dockerfile \
             .
 
-      - name: Sync GitHub-managed secrets to Container App
-        # JWT_SECRET is required in production (APP_ENV=container). If it's
-        # missing, the new revision fails to boot and traffic stays on the
-        # stale revision. We sync DEMO_PASSWORD here too so demo accounts work.
+      - name: Sync GitHub-managed secrets to Key Vault
+        # Secrets are managed in Key Vault (atlaslens-kv-<sub>). Container
+        # App reads them via key_vault_secret_id references resolved by the
+        # backend's UAMI. We write new values into KV here (no longer to the
+        # Container App's local secret store) and a new revision picks them
+        # up automatically on rollout.
         run: |
-          SECRET_ARGS=()
+          KV=$(az keyvault list -g "${{ env.RG }}" --query "[0].name" -o tsv)
+          if [ -z "$KV" ]; then
+            echo "::warning::No Key Vault found in ${{ env.RG }}; skipping secret sync. (Run terraform apply first.)"
+            exit 0
+          fi
           if [ -n "${{ secrets.JWT_SECRET }}" ]; then
-            SECRET_ARGS+=(jwt-secret="${{ secrets.JWT_SECRET }}")
+            az keyvault secret set --vault-name "$KV" --name jwt-secret \
+              --value "${{ secrets.JWT_SECRET }}" --output none
+            echo "  · jwt-secret synced to $KV"
+          else
+            echo "::warning::JWT_SECRET GitHub secret is empty; keeping whatever's currently in KV."
           fi
           if [ -n "${{ secrets.DEMO_PASSWORD }}" ]; then
-            SECRET_ARGS+=(demo-password="${{ secrets.DEMO_PASSWORD }}")
-          fi
-          if [ ${#SECRET_ARGS[@]} -gt 0 ]; then
-            az containerapp secret set \
-              -g "${{ env.RG }}" -n "${{ env.APP }}" \
-              --secrets "${SECRET_ARGS[@]}"
+            az keyvault secret set --vault-name "$KV" --name demo-password \
+              --value "${{ secrets.DEMO_PASSWORD }}" --output none
+            echo "  · demo-password synced to $KV"
           else
-            echo "::warning::Neither JWT_SECRET nor DEMO_PASSWORD GitHub secret is set; relying on whatever is already on the Container App."
+            echo "::warning::DEMO_PASSWORD GitHub secret is empty; demo accounts may not work."
           fi
 
-      - name: Update Container App image + env bindings
-        # --set-env-vars is incremental: it only updates the listed vars and
-        # leaves the rest untouched, so it's safe to list both JWT_SECRET and
-        # DEMO_PASSWORD here even if one of the GitHub secrets is empty.
+      - name: Update Container App image
+        # Image only — secrets are pulled from Key Vault via UAMI on revision
+        # start, so we don't need to set env bindings here anymore.
         run: |
-          ENV_ARGS=(JWT_SECRET=secretref:jwt-secret DEMO_PASSWORD=secretref:demo-password)
-          if [ -z "${{ secrets.DEMO_PASSWORD }}" ]; then
-            echo "::warning::DEMO_PASSWORD GitHub secret is empty; demo accounts won't work until you set it."
-          fi
-          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
-            echo "::warning::JWT_SECRET GitHub secret is empty; relying on the existing Container App secret if any."
-          fi
           az containerapp update \
             -g "${{ env.RG }}" -n "${{ env.APP }}" \
-            --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
-            --set-env-vars "${ENV_ARGS[@]}"
+            --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}"
 
       - name: Smoke test
         run: |

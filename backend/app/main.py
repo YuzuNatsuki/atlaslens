@@ -14,11 +14,13 @@ from app.api import (
     daily_pulse,
     goals,
     health,
+    insight_actions,
     me,
     members,
     one_on_ones,
     simulator,
 )
+from app.core.audit_middleware import AuditLogMiddleware
 from app.core.config import get_settings
 from app.core.cosmos_client import cosmos_configured
 from app.core.tracing import instrument_fastapi, setup_tracing
@@ -80,6 +82,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Audit middleware runs after CORS so OPTIONS preflight doesn't get logged.
+app.add_middleware(AuditLogMiddleware)
+
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(me.router, prefix="/api/me", tags=["me"])
 app.include_router(members.router, prefix="/api/members", tags=["members"])
@@ -89,6 +94,9 @@ app.include_router(simulator.router, prefix="/api/simulator", tags=["simulator"]
 app.include_router(goals.router, prefix="/api/goals", tags=["goals"])
 app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(
+    insight_actions.router, prefix="/api/insight-actions", tags=["insight-actions"]
+)
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 

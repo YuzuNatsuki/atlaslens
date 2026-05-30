@@ -2,43 +2,52 @@ variable "name_prefix" { type = string }
 variable "location" { type = string }
 variable "resource_group_name" { type = string }
 variable "log_analytics_workspace_id" { type = string }
-variable "application_insights_connection_string" {
-  type      = string
-  sensitive = true
-}
 variable "image_tag" { type = string }
 
 variable "registry_login_server" { type = string }
 variable "registry_username" { type = string }
-variable "registry_password" {
-  type      = string
-  sensitive = true
-}
 
 variable "openai_endpoint" { type = string }
-variable "openai_api_key" {
-  type      = string
-  sensitive = true
-}
 variable "foundry_project_endpoint" {
   type    = string
   default = ""
 }
 variable "cosmos_endpoint" { type = string }
-variable "cosmos_key" {
-  type      = string
-  sensitive = true
-}
-variable "jwt_secret" {
-  type      = string
-  sensitive = true
-}
-variable "demo_password" {
-  description = "Out-of-band demo account password, passed via secret env DEMO_PASSWORD."
+
+# ---- Key Vault references (resolved at runtime by the Container App MI). ----
+# Each value is a Key Vault Secret URI (versionless) produced by the keyvault
+# module. The Container App fetches the latest version on revision start.
+variable "kv_secret_id_jwt_secret" {
+  description = "Key Vault Secret URI for the JWT signing key."
   type        = string
-  sensitive   = true
+}
+variable "kv_secret_id_demo_password" {
+  description = "Key Vault Secret URI for the demo account password. Empty disables demo login."
+  type        = string
   default     = ""
 }
+variable "kv_secret_id_openai_api_key" {
+  description = "Key Vault Secret URI for the Azure OpenAI API key."
+  type        = string
+}
+variable "kv_secret_id_cosmos_key" {
+  description = "Key Vault Secret URI for the Cosmos DB primary key."
+  type        = string
+}
+variable "kv_secret_id_appi_conn" {
+  description = "Key Vault Secret URI for the App Insights connection string."
+  type        = string
+}
+variable "kv_secret_id_registry_password" {
+  description = "Key Vault Secret URI for the ACR admin password."
+  type        = string
+}
+
+variable "kv_uami_id" {
+  description = "Resource ID of the User-Assigned Managed Identity used to pull secrets from Key Vault."
+  type        = string
+}
+
 variable "extra_cors_origins" {
   description = "Comma-separated list of extra allowed origins (e.g. the frontend Container App URL)."
   type        = string
@@ -60,9 +69,17 @@ resource "azurerm_container_app" "backend" {
   resource_group_name          = var.resource_group_name
   revision_mode                = "Single"
 
+  # SystemAssigned is kept for the AI Foundry role grant (out-of-band script).
+  # UserAssigned MI is what reads Key Vault, granted Secrets User at apply time
+  # before this Container App boots.
   identity {
-    type = "SystemAssigned"
+    type         = "SystemAssigned, UserAssigned"
+    identity_ids = [var.kv_uami_id]
   }
+
+  # All secrets below are sourced from Key Vault via the user-assigned MI.
+  # Rotation is handled by updating the secret value in KV and bumping a new
+  # revision; no plaintext leaves the vault.
 
   registry {
     server               = var.registry_login_server
@@ -71,30 +88,36 @@ resource "azurerm_container_app" "backend" {
   }
 
   secret {
-    name  = "registry-password"
-    value = var.registry_password
+    name                = "registry-password"
+    key_vault_secret_id = var.kv_secret_id_registry_password
+    identity            = var.kv_uami_id
   }
   secret {
-    name  = "openai-key"
-    value = var.openai_api_key
+    name                = "openai-key"
+    key_vault_secret_id = var.kv_secret_id_openai_api_key
+    identity            = var.kv_uami_id
   }
   secret {
-    name  = "cosmos-key"
-    value = var.cosmos_key
+    name                = "cosmos-key"
+    key_vault_secret_id = var.kv_secret_id_cosmos_key
+    identity            = var.kv_uami_id
   }
   secret {
-    name  = "appi-conn"
-    value = var.application_insights_connection_string
+    name                = "appi-conn"
+    key_vault_secret_id = var.kv_secret_id_appi_conn
+    identity            = var.kv_uami_id
   }
   secret {
-    name  = "jwt-secret"
-    value = var.jwt_secret
+    name                = "jwt-secret"
+    key_vault_secret_id = var.kv_secret_id_jwt_secret
+    identity            = var.kv_uami_id
   }
   dynamic "secret" {
-    for_each = var.demo_password == "" ? [] : [var.demo_password]
+    for_each = var.kv_secret_id_demo_password == "" ? [] : [var.kv_secret_id_demo_password]
     content {
-      name  = "demo-password"
-      value = secret.value
+      name                = "demo-password"
+      key_vault_secret_id = secret.value
+      identity            = var.kv_uami_id
     }
   }
 
@@ -163,7 +186,7 @@ resource "azurerm_container_app" "backend" {
         secret_name = "jwt-secret"
       }
       dynamic "env" {
-        for_each = var.demo_password == "" ? [] : [1]
+        for_each = var.kv_secret_id_demo_password == "" ? [] : [1]
         content {
           name        = "DEMO_PASSWORD"
           secret_name = "demo-password"

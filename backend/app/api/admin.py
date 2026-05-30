@@ -9,6 +9,7 @@ import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from app.core import audit
 from app.core.auth import AuthContext, get_auth_context, require_admin
 from app.models.schemas import Department, Division, MemberProfile, Role, Team
 from app.services import admin_dashboard, cosmos_repo, org_repo
@@ -55,6 +56,21 @@ async def reseed_cosmos_from_files(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"reseeded": result, "scope": payload.scope}
+
+
+# ---------- Audit log viewer ----------
+
+
+@router.get("/audit-events")
+async def list_audit_events(
+    _: AuthContext = Depends(_admin_only),
+    actor_id: str | None = None,
+    action: str | None = None,
+    limit: int = 100,
+) -> dict:
+    """Recent audit events, newest first. Optional filters: actor_id, action."""
+    rows = audit.list_events(actor_id=actor_id, action=action, limit=limit)
+    return {"events": rows, "count": len(rows)}
 
 
 # ---------- Org tree ----------

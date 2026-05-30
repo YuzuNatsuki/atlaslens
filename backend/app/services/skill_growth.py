@@ -18,6 +18,7 @@ from datetime import date as date_type
 from datetime import timedelta
 from typing import Any
 
+from app.agents.summary_critic import critique_and_maybe_refine
 from app.core.azure_clients import chat_complete
 from app.services.artefact_store import (
     get_artefact,
@@ -144,6 +145,14 @@ async def generate_summary(
     except json.JSONDecodeError:
         log.warning("skill-growth: JSON parse failed for %s", member_id)
         summary = {"raw": raw, "parse_error": True}
+
+    # Critic loop: review the summary, refine on needs_refinement.
+    summary, critic_report, refined = await critique_and_maybe_refine(
+        ARTEFACT_KIND, summary
+    )
+    if isinstance(summary, dict):
+        summary["_critique"] = critic_report
+        summary["_refined"] = refined
 
     saved = save_artefact(
         ARTEFACT_KIND,

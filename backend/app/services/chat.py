@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from app.core.azure_clients import get_openai_client
 from app.core.config import get_settings
+from app.services import agent_memory
 from app.services.agent_tools import TOOL_DEFINITIONS, dispatch
 from app.services.data_loader import DataLoader
 
@@ -181,6 +182,12 @@ async def chat_with_em(
     client = get_openai_client()
     style_addendum, temperature = _resolve_style(style, style_instructions)
 
+    loader = DataLoader()
+    member_index = {p.id: p.name for p in loader.load_profiles()}
+    memory_block = agent_memory.format_for_prompt(
+        em_member_id, member_index=member_index
+    )
+
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": BASE_PROMPT + "\n\n" + style_addendum},
         {
@@ -192,6 +199,17 @@ async def chat_with_em(
             ),
         },
     ]
+    if memory_block:
+        messages.append(
+            {
+                "role": "system",
+                "content": (
+                    memory_block
+                    + "\n\n上記は他の AtlasLens エージェントも参照する共有メモリです。"
+                    "EM が注目しているメンバーに該当する話題なら、回答の中で必ず触れてください。"
+                ),
+            }
+        )
     for msg in history[-10:]:
         messages.append({"role": msg.role, "content": msg.content})
 

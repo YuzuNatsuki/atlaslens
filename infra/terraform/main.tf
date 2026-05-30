@@ -55,6 +55,17 @@ module "storage" {
   tags                = var.tags
 }
 
+# Backend's KV access uses a User-Assigned Managed Identity created before
+# the Container App. This avoids the chicken-and-egg problem of granting a
+# system-assigned MI role assignments that only exist after the Container App
+# itself is up.
+resource "azurerm_user_assigned_identity" "backend_kv" {
+  name                = "${var.name_prefix}-backend-kv-mi"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = var.tags
+}
+
 module "keyvault" {
   source              = "./modules/keyvault"
   name_prefix         = var.name_prefix
@@ -63,6 +74,24 @@ module "keyvault" {
   resource_group_name = azurerm_resource_group.main.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   tags                = var.tags
+
+  # Secrets to provision in the vault. The Container App consumes them via
+  # key_vault_secret_id references rather than receiving plaintext.
+  jwt_secret             = local.effective_jwt_secret
+  demo_password          = var.demo_password
+  openai_api_key         = module.foundry.primary_key
+  cosmos_key             = module.cosmos.primary_key
+  appi_connection_string = module.observability.application_insights_connection_string
+  registry_password      = module.acr.admin_password
+}
+
+# UAMI gets Secrets User on the vault BEFORE the Container App boots its
+# first revision. Container App depends on this role assignment, so by
+# revision start the MI can already resolve key_vault_secret_id refs.
+resource "azurerm_role_assignment" "uami_kv_reader" {
+  scope                = module.keyvault.key_vault_id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.backend_kv.principal_id
 }
 
 module "foundry" {
@@ -99,27 +128,38 @@ module "acr" {
 }
 
 module "container_app" {
-  source                                 = "./modules/container_app"
-  name_prefix                            = var.name_prefix
-  location                               = azurerm_resource_group.main.location
-  resource_group_name                    = azurerm_resource_group.main.name
-  log_analytics_workspace_id             = module.observability.log_analytics_id
-  application_insights_connection_string = module.observability.application_insights_connection_string
-  image_tag                              = var.backend_image_tag
+  source                     = "./modules/container_app"
+  name_prefix                = var.name_prefix
+  location                   = azurerm_resource_group.main.location
+  resource_group_name        = azurerm_resource_group.main.name
+  log_analytics_workspace_id = module.observability.log_analytics_id
+  image_tag                  = var.backend_image_tag
 
   registry_login_server = module.acr.login_server
   registry_username     = module.acr.admin_username
-  registry_password     = module.acr.admin_password
 
   openai_endpoint          = module.foundry.openai_endpoint
-  openai_api_key           = module.foundry.primary_key
   foundry_project_endpoint = module.foundry.foundry_project_endpoint
   cosmos_endpoint          = module.cosmos.endpoint
-  cosmos_key               = module.cosmos.primary_key
-  jwt_secret               = local.effective_jwt_secret
-  demo_password            = var.demo_password
-  extra_cors_origins       = "https://${var.name_prefix}-web.${module.container_app.environment_default_domain}"
-  tags                     = var.tags
+
+  # All sensitive values are resolved at runtime from Key Vault via the
+  # user-assigned MI. Container App keeps its system-assigned MI too so the
+  # AI Foundry role grant (granted out-of-band) keeps working unchanged.
+  kv_uami_id                     = azurerm_user_assigned_identity.backend_kv.id
+  kv_secret_id_jwt_secret        = module.keyvault.secret_ids.jwt_secret
+  kv_secret_id_demo_password     = module.keyvault.secret_ids.demo_password
+  kv_secret_id_openai_api_key    = module.keyvault.secret_ids.openai_api_key
+  kv_secret_id_cosmos_key        = module.keyvault.secret_ids.cosmos_key
+  kv_secret_id_appi_conn         = module.keyvault.secret_ids.appi_conn
+  kv_secret_id_registry_password = module.keyvault.secret_ids.registry_password
+
+  extra_cors_origins = "https://${var.name_prefix}-web.${module.container_app.environment_default_domain}"
+  tags               = var.tags
+
+  # Don't try to start the Container App until the UAMI can actually read
+  # the vault. Without this, the first revision boots, fails to resolve the
+  # secret references, and ActivationFailed-loops.
+  depends_on = [azurerm_role_assignment.uami_kv_reader]
 }
 
 # NOTE: the Container App MI also needs "Azure AI User" on the Foundry account

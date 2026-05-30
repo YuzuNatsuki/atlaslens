@@ -91,17 +91,24 @@ TEAM_SUMMARY_SYSTEM_PROMPT = """\
 """
 
 
-async def summarize_day(reports: list[dict], member_index: dict[str, str]) -> dict:
+async def summarize_day(
+    reports: list[dict],
+    member_index: dict[str, str],
+    *,
+    memory_block: str | None = None,
+) -> dict:
     payload = {"reports": reports, "members": member_index}
     user_prompt = (
         "Summarize today's team for the EM as JSON.\n\n"
         + json.dumps(payload, ensure_ascii=False, default=str)
     )
+    system_messages: list[dict] = [
+        {"role": "system", "content": TEAM_SUMMARY_SYSTEM_PROMPT},
+    ]
+    if memory_block:
+        system_messages.append({"role": "system", "content": memory_block})
     raw = await chat_complete(
-        messages=[
-            {"role": "system", "content": TEAM_SUMMARY_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
+        messages=system_messages + [{"role": "user", "content": user_prompt}],
         temperature=0.3,
         response_format={"type": "json_object"},
         max_tokens=700,
@@ -114,7 +121,7 @@ async def summarize_day(reports: list[dict], member_index: dict[str, str]) -> di
 
 RANGE_SUMMARY_SYSTEM_PROMPT = """\
 あなたは AtlasLens の "Reporter" です。EM が複数日（数日〜数週間）の日報を
-横断的に把握できるよう、期間トレンドサマリーを作ります。単日サマリーと違い、
+横断的に把握できるよう、期間サマリーを作ります。単日サマリーと違い、
 1 日のスナップショットではなく「期間内に見えた変化・繰り返し・兆候」を捉えます。
 
 入力 (reports[]) には各日の日報が `member_name`, `member_id`, `report_date`,
@@ -163,17 +170,24 @@ RANGE_SUMMARY_SYSTEM_PROMPT = """\
 """
 
 
-async def summarize_range(reports: list[dict], member_index: dict[str, str]) -> dict:
+async def summarize_range(
+    reports: list[dict],
+    member_index: dict[str, str],
+    *,
+    memory_block: str | None = None,
+) -> dict:
     payload = {"reports": reports, "members": member_index}
     user_prompt = (
         "Summarize the team over the given range as JSON.\n\n"
         + json.dumps(payload, ensure_ascii=False, default=str)
     )
+    system_messages: list[dict] = [
+        {"role": "system", "content": RANGE_SUMMARY_SYSTEM_PROMPT},
+    ]
+    if memory_block:
+        system_messages.append({"role": "system", "content": memory_block})
     raw = await chat_complete(
-        messages=[
-            {"role": "system", "content": RANGE_SUMMARY_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
+        messages=system_messages + [{"role": "user", "content": user_prompt}],
         temperature=0.3,
         response_format={"type": "json_object"},
         max_tokens=1600,

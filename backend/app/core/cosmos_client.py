@@ -34,6 +34,9 @@ CONTAINER_DEFS: dict[str, str] = {
     "teams": "/department_id",
     # AI artefacts cached after generation. id == "team-summary:<YYYY-MM-DD>".
     "ai_artefacts": "/kind",
+    # Audit trail: who accessed / mutated which entity, when, and from where.
+    # Partitioned by actor so per-user listing is cheap.
+    "audit_events": "/actor_id",
 }
 
 

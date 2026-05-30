@@ -1,10 +1,12 @@
 """Chat API — EM-only Agentic conversational assistant."""
 
+import contextlib
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from app.core.auth import AuthContext, get_auth_context, require_em
-from app.services import chat_history
+from app.services import agent_memory, chat_history
 from app.services.chat import ChatMessage, chat_with_em, list_style_presets
 
 router = APIRouter()
@@ -105,4 +107,17 @@ async def chat(payload: ChatRequest, auth: AuthContext = Depends(_em_only)) -> C
         style=payload.style,
         style_instructions=payload.style_instructions,
     )
+
+    # Record the EM's latest question into shared agent memory so other agents
+    # (Daily Pulse, growth summary critic, …) know what the EM cares about.
+    last_user = next(
+        (m for m in reversed(payload.messages) if m.role == "user"),
+        None,
+    )
+    if last_user and last_user.content.strip():
+        with contextlib.suppress(Exception):
+            agent_memory.record_topic(
+                auth.member_id, topic=last_user.content.strip()
+            )
+
     return ChatResponse(**result)

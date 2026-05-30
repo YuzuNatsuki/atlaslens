@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   CalendarDays,
   CalendarRange,
+  CheckSquare,
   Compass,
   History,
   Lightbulb,
@@ -19,6 +20,7 @@ import {
   type PastTeamSummary,
   type RangeMemberTrend,
   type RangeRiskSignal,
+  type TeamRangeSummary,
 } from "@/lib/api";
 import { pickText } from "@/lib/format";
 import {
@@ -44,7 +46,7 @@ export default function DailyPulsePage() {
     <div className="grid gap-8">
       <PageHeader
         title="日報サマリー"
-        subtitle="Reporter エージェントがチーム全員の日報を読み、朝会前 30 秒で把握できる形に要約します。単日でも、期間（週次トレンド）でも生成できます。"
+        subtitle="Reporter エージェントがチーム全員の日報を読み、朝会前 30 秒で把握できる形に要約します。単日でも、複数日にまたがる期間サマリーでも生成できます。"
       />
 
       <div className="flex items-center gap-2">
@@ -56,7 +58,7 @@ export default function DailyPulsePage() {
         />
         <ModeTab
           icon={<CalendarRange size={14} />}
-          label="期間トレンド"
+          label="期間サマリー"
           active={mode === "range"}
           onClick={() => setMode("range")}
         />
@@ -400,7 +402,7 @@ function RangePanel() {
       <section className="card">
         <SectionHeader
           icon={<CalendarRange size={16} className="text-brand" />}
-          title="期間を選んでトレンドサマリーを生成"
+          title="期間を選んで期間サマリーを生成"
           subtitle="複数日の日報を横断し、繰り返しのパターン・離職リスク・対人摩擦などの兆候を AI が抽出します"
         />
         <div className="flex flex-wrap items-end gap-3 mt-2">
@@ -465,7 +467,7 @@ function RangePanel() {
         {!summaryQ.isLoading && !hasResults && !regenerateM.isPending && (
           <EmptyState
             icon={<CalendarRange size={28} />}
-            title="この期間のトレンドサマリーはまだ生成されていません"
+            title="この期間のサマリーはまだ生成されていません"
             description="「AI で生成」を押すと Reporter エージェントが期間内の日報を読み込みます。"
           />
         )}
@@ -532,11 +534,7 @@ function RangePanel() {
   );
 }
 
-function RangeResult({
-  summary,
-}: {
-  summary: NonNullable<ReturnType<typeof api.teamSummaryRange> extends Promise<infer T> ? T : never>;
-}) {
+function RangeResult({ summary }: { summary: TeamRangeSummary }) {
   const s = summary.summary;
   return (
     <>
@@ -568,7 +566,11 @@ function RangeResult({
           </h3>
           <ul className="grid gap-2.5">
             {s.risk_signals.map((r, i) => (
-              <RiskSignalItem key={i} signal={r} />
+              <RiskSignalItem
+                key={i}
+                signal={r}
+                sourceKey={`${summary.start_date}_${summary.end_date}`}
+              />
             ))}
           </ul>
         </div>
@@ -616,12 +618,35 @@ function RangeResult({
   );
 }
 
-function RiskSignalItem({ signal }: { signal: RangeRiskSignal }) {
+function RiskSignalItem({
+  signal,
+  sourceKey,
+}: {
+  signal: RangeRiskSignal;
+  sourceKey: string;
+}) {
   const meta = RISK_KIND_META[signal.kind ?? ""] ?? {
     label: signal.kind ?? "シグナル",
     emoji: "•",
     cls: "bg-slate-100 text-slate-700 border-slate-200",
   };
+  const qc = useQueryClient();
+  const createM = useMutation({
+    mutationFn: () =>
+      api.createInsightAction({
+        title:
+          signal.summary?.slice(0, 80) ||
+          `${meta.label}: ${signal.member_name ?? "メンバー"}`,
+        source_kind: "team-summary-range",
+        source_key: sourceKey,
+        signal_kind: signal.kind || undefined,
+        member_id: signal.member_name || undefined,
+        evidence_dates: signal.evidence_dates || [],
+        details: signal.summary || "",
+        initial_note: "期間サマリーから追跡開始",
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["insight-actions"] }),
+  });
   return (
     <li className="rounded-lg border border-rose-200 bg-white p-3">
       <div className="flex flex-wrap items-baseline gap-2 mb-1">
@@ -640,6 +665,19 @@ function RiskSignalItem({ signal }: { signal: RangeRiskSignal }) {
             根拠日: {signal.evidence_dates.join(", ")}
           </span>
         )}
+        <button
+          onClick={() => createM.mutate()}
+          disabled={createM.isPending || createM.isSuccess}
+          className="ml-auto inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-rose-300 text-rose-700 bg-white hover:bg-rose-50 disabled:opacity-60"
+          title="フォローアップ画面で PDCA を回します"
+        >
+          <CheckSquare size={11} />
+          {createM.isSuccess
+            ? "追跡を作成しました"
+            : createM.isPending
+              ? "登録中…"
+              : "アクションを追跡"}
+        </button>
       </div>
       {signal.summary && (
         <p className="text-sm text-slate-800">{signal.summary}</p>

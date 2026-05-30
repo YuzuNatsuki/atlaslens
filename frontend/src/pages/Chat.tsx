@@ -4,6 +4,8 @@ import {
   ChevronDown,
   ChevronRight,
   MessageSquare,
+  Pin,
+  PinOff,
   Send,
   Sparkles,
   Trash2,
@@ -227,6 +229,8 @@ export default function ChatPage() {
               ))}
             </div>
           </section>
+
+          <FocusMembersPanel />
         </aside>
 
         {/* ----- right: chat thread + composer ----- */}
@@ -374,6 +378,113 @@ function formatArgs(args: Record<string, unknown>): string {
   return Object.entries(args)
     .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
     .join(", ");
+}
+
+function FocusMembersPanel() {
+  const qc = useQueryClient();
+  const membersQ = useQuery({
+    queryKey: ["members"],
+    queryFn: api.listMembers,
+    staleTime: 60_000,
+  });
+  const memoryQ = useQuery({
+    queryKey: ["agent-memory"],
+    queryFn: api.agentMemory,
+    staleTime: 30_000,
+  });
+  const [picker, setPicker] = useState("");
+  const [reason, setReason] = useState("");
+
+  const addM = useMutation({
+    mutationFn: () =>
+      api.addMemoryFocus(picker, reason || "EM 注目"),
+    onSuccess: (m) => {
+      qc.setQueryData(["agent-memory"], m);
+      setPicker("");
+      setReason("");
+    },
+  });
+  const removeM = useMutation({
+    mutationFn: (mid: string) => api.removeMemoryFocus(mid),
+    onSuccess: (m) => qc.setQueryData(["agent-memory"], m),
+  });
+
+  const memberById = new Map(
+    (membersQ.data?.members ?? []).map((p) => [p.id, p.name]),
+  );
+  const focus = memoryQ.data?.focus_members ?? [];
+
+  return (
+    <section className="card">
+      <h2 className="eyebrow mb-2 flex items-center gap-1">
+        <Pin size={12} /> 注目しているメンバー
+      </h2>
+      <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
+        ここに登録すると、AI アシスタントと日報サマリーが共通の関心事として扱います。
+      </p>
+
+      <ul className="grid gap-1.5 mb-2">
+        {focus.length === 0 && (
+          <li className="text-xs text-slate-400">登録なし</li>
+        )}
+        {focus.map((f) => (
+          <li
+            key={f.member_id}
+            className="flex items-center justify-between gap-2 text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white"
+          >
+            <div className="min-w-0">
+              <div className="font-medium text-slate-800 truncate">
+                {memberById.get(f.member_id) ?? f.member_id}
+              </div>
+              {f.reason && (
+                <div className="text-[10px] text-slate-500 truncate">
+                  {f.reason}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => removeM.mutate(f.member_id)}
+              className="text-slate-400 hover:text-rose-600 transition"
+              title="登録を外す"
+            >
+              <PinOff size={12} />
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="grid gap-1.5">
+        <select
+          value={picker}
+          onChange={(e) => setPicker(e.target.value)}
+          className="input-sm text-xs"
+        >
+          <option value="">メンバーを選ぶ…</option>
+          {(membersQ.data?.members ?? [])
+            .filter((m) => !focus.find((f) => f.member_id === m.id))
+            .map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.id})
+              </option>
+            ))}
+        </select>
+        <input
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="理由 (任意・例: 離職リスク確認)"
+          className="input-sm text-xs"
+        />
+        <button
+          onClick={() => addM.mutate()}
+          disabled={!picker || addM.isPending}
+          className="btn-secondary btn-xs"
+        >
+          {addM.isPending ? "登録中…" : "注目に追加"}
+        </button>
+      </div>
+    </section>
+  );
 }
 
 function Bubble({

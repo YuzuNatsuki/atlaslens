@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from app.core.auth import AuthContext, get_auth_context
 from app.models.schemas import DailyReport, Goal
+from app.services import agent_memory
 from app.services.daily_pulse import draft_daily_report
 from app.services.daily_report_store import save_daily_report
 from app.services.data_loader import DataLoader
@@ -252,3 +253,47 @@ async def get_growth_summary_by_key(
     if found is None:
         raise HTTPException(status_code=404, detail="summary not found")
     return found
+
+
+# ---------- Agent Memory (EM-scoped) ----------
+
+
+class FocusPayload(BaseModel):
+    member_id: str
+    reason: str = ""
+
+
+class PreferencesPayload(BaseModel):
+    patch: dict
+
+
+@router.get("/memory")
+async def get_agent_memory(auth: AuthContext = Depends(get_auth_context)) -> dict:
+    """Return the EM's shared memory document (focus members / topics / prefs)."""
+    return agent_memory.get_memory(auth.member_id)
+
+
+@router.post("/memory/focus")
+async def add_memory_focus(
+    payload: FocusPayload,
+    auth: AuthContext = Depends(get_auth_context),
+) -> dict:
+    return agent_memory.add_focus_member(
+        auth.member_id, member_id=payload.member_id, reason=payload.reason
+    )
+
+
+@router.delete("/memory/focus/{member_id}")
+async def remove_memory_focus(
+    member_id: str,
+    auth: AuthContext = Depends(get_auth_context),
+) -> dict:
+    return agent_memory.remove_focus_member(auth.member_id, member_id=member_id)
+
+
+@router.post("/memory/preferences")
+async def update_memory_preferences(
+    payload: PreferencesPayload,
+    auth: AuthContext = Depends(get_auth_context),
+) -> dict:
+    return agent_memory.update_preferences(auth.member_id, patch=payload.patch)

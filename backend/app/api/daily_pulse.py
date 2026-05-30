@@ -55,21 +55,28 @@ async def draft(
 @router.get("/team-summary")
 async def team_summary(
     report_date: date_type,
-    _: AuthContext = Depends(_em_only),
+    auth: AuthContext = Depends(_em_only),
 ) -> dict:
     """Return the stored summary or generate one on first request."""
     loader = DataLoader()
-    return await summarize_team_day(report_date, loader, force=False)
+    return await summarize_team_day(
+        report_date, loader, force=False, em_member_id=auth.member_id
+    )
 
 
 @router.post("/team-summary/generate")
 async def regenerate_team_summary(
     payload: GenerateRequest,
-    _: AuthContext = Depends(_em_only),
+    auth: AuthContext = Depends(_em_only),
 ) -> dict:
     """Force regeneration and overwrite the persisted summary."""
     loader = DataLoader()
-    return await summarize_team_day(payload.report_date, loader, force=payload.force)
+    return await summarize_team_day(
+        payload.report_date,
+        loader,
+        force=payload.force,
+        em_member_id=auth.member_id,
+    )
 
 
 @router.delete("/team-summary")
@@ -105,12 +112,14 @@ class RangeGenerateRequest(BaseModel):
 async def team_summary_range(
     start_date: date_type,
     end_date: date_type,
-    _: AuthContext = Depends(_em_only),
+    auth: AuthContext = Depends(_em_only),
 ) -> dict:
-    """Return the stored multi-day trend summary, or generate on first request."""
+    """Return the stored multi-day summary, or generate on first request."""
     loader = DataLoader()
     try:
-        return await summarize_team_range(start_date, end_date, loader, force=False)
+        return await summarize_team_range(
+            start_date, end_date, loader, force=False, em_member_id=auth.member_id
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -118,7 +127,7 @@ async def team_summary_range(
 @router.post("/team-summary/range/generate")
 async def regenerate_team_summary_range(
     payload: RangeGenerateRequest,
-    _: AuthContext = Depends(_em_only),
+    auth: AuthContext = Depends(_em_only),
 ) -> dict:
     """Force regeneration and overwrite the persisted range summary."""
     loader = DataLoader()
@@ -128,6 +137,7 @@ async def regenerate_team_summary_range(
             payload.end_date,
             loader,
             force=payload.force,
+            em_member_id=auth.member_id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

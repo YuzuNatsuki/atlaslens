@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import {
   CalendarDays,
+  CheckSquare,
   Compass,
   LayoutDashboard,
   LogOut,
@@ -23,6 +24,7 @@ import OneOnOnePage from "./pages/OneOnOne";
 import SimulatorPage from "./pages/Simulator";
 import DailyPulsePage from "./pages/DailyPulse";
 import ChatPage from "./pages/Chat";
+import FollowupsPage from "./pages/Followups";
 import AdminPage from "./pages/Admin";
 
 import MyDashboard from "./pages/me/MyDashboard";
@@ -67,6 +69,13 @@ const emNav: NavItem[] = [
     label: "AI アシスタント",
     hint: "チームの状況について質問",
     icon: MessageSquare,
+    section: "EM 向け",
+  },
+  {
+    to: "/followups",
+    label: "フォローアップ",
+    hint: "AI 示唆の PDCA 追跡",
+    icon: CheckSquare,
     section: "EM 向け",
   },
 ];
@@ -163,6 +172,7 @@ function EmRoutes({ isAdmin }: { isAdmin: boolean }) {
       <Route path="/simulator" element={<SimulatorPage />} />
       <Route path="/daily-pulse" element={<DailyPulsePage />} />
       <Route path="/chat" element={<ChatPage />} />
+      <Route path="/followups" element={<FollowupsPage />} />
       {isAdmin && <Route path="/admin" element={<AdminPage />} />}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

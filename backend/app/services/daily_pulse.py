@@ -16,6 +16,8 @@ from app.agents.reporter_agent import (
     summarize_day,
     summarize_range,
 )
+from app.agents.summary_critic import critique_and_maybe_refine
+from app.services import agent_memory
 from app.services.artefact_store import (
     delete_artefact,
     get_artefact,
@@ -66,6 +68,7 @@ async def summarize_team_day(
     loader: DataLoader,
     *,
     force: bool = False,
+    em_member_id: str | None = None,
 ) -> dict:
     """Return a Cosmos-persisted team summary, or compute one when missing/forced."""
     date_key = report_date.isoformat()
@@ -100,7 +103,12 @@ async def summarize_team_day(
         }
         for r in reports
     ]
-    summary = await summarize_day(payload, members)
+    memory_block = (
+        agent_memory.format_for_prompt(em_member_id, member_index=members)
+        if em_member_id
+        else None
+    )
+    summary = await summarize_day(payload, members, memory_block=memory_block)
     summary = _rewrite_member_ids_to_names(summary, members)
     saved = save_artefact(
         ARTEFACT_KIND,
@@ -135,7 +143,7 @@ def discard_team_summary(report_date: date_type) -> bool:
     return delete_artefact(ARTEFACT_KIND, report_date.isoformat())
 
 
-# ---------------- Range summary (multi-day trend) ----------------
+# ---------------- Range summary (multi-day) ----------------
 
 
 def _range_key(start: date_type, end: date_type) -> str:
@@ -172,8 +180,13 @@ async def summarize_team_range(
     loader: DataLoader,
     *,
     force: bool = False,
+    em_member_id: str | None = None,
 ) -> dict:
-    """Return a Cosmos-persisted range trend summary, generating when missing."""
+    """Return a Cosmos-persisted range summary, generating when missing.
+
+    Multi-agent flow:
+        Reporter (summarize_range) → Critic → Refiner (only on needs_refinement).
+    """
     _validate_range(start_date, end_date)
     key = _range_key(start_date, end_date)
 
@@ -212,8 +225,19 @@ async def summarize_team_range(
         }
         for r in reports
     ]
-    summary = await summarize_range(payload, members)
+    memory_block = (
+        agent_memory.format_for_prompt(em_member_id, member_index=members)
+        if em_member_id
+        else None
+    )
+    summary = await summarize_range(payload, members, memory_block=memory_block)
+    # Critic loop: only refine when verdict == "needs_refinement".
+    summary, critic_report, refined = await critique_and_maybe_refine(
+        ARTEFACT_KIND_RANGE, summary
+    )
     summary = _rewrite_range_member_ids_to_names(summary, members)
+    summary["_critique"] = critic_report
+    summary["_refined"] = refined
     saved = save_artefact(
         ARTEFACT_KIND_RANGE,
         key,
