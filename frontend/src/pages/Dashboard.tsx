@@ -83,7 +83,6 @@ export default function Dashboard() {
               </h1>
               <p className="text-sm opacity-90 mt-1 max-w-2xl">
                 チーム（アトラス株式会社）の今を、AI が要約してお見せします。
-                行動データのみが対象で、感情の推測は行いません。
               </p>
             </div>
             <Link

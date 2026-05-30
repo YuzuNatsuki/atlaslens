@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import {
-  BarChart3,
   CalendarDays,
   Compass,
   LayoutDashboard,
@@ -376,12 +375,6 @@ function Topbar({
           {active?.label ?? "AtlasLens"}
         </h1>
       </div>
-      <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500">
-        <BarChart3 size={14} className="text-brand" />
-        <span>
-          観察対象は行動データのみ。AI は感情を推測しません。
-        </span>
-      </div>
       <div className="flex items-center gap-2 lg:hidden">
         <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-500">
           <User size={14} className="text-slate-400" />
@@ -407,10 +400,7 @@ function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10 py-3 text-xs text-slate-400 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-        <span>AtlasLens</span>
-        <span>
-          観察対象は行動データのみ。感情・メンタル状態は推測しません。
-        </span>
+        <span>AtlasLens — EM Co-pilot powered by Azure AI Foundry</span>
       </div>
     </footer>
   );
