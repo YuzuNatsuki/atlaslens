@@ -3,8 +3,10 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_DEV_JWT_SECRET = "atlaslens-dev-secret-change-me"
 
 
 class Settings(BaseSettings):
@@ -37,9 +39,18 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
 
     # JWT secret. Override via env in production.
-    jwt_secret: str = Field(default="atlaslens-dev-secret-change-me")
+    jwt_secret: str = Field(default=_DEV_JWT_SECRET)
     jwt_algorithm: str = Field(default="HS256")
     jwt_expires_minutes: int = Field(default=60 * 24)
+
+    @model_validator(mode="after")
+    def _validate_secrets(self) -> "Settings":
+        if self.app_env == "production":
+            if self.jwt_secret == _DEV_JWT_SECRET:
+                raise ValueError("JWT_SECRET must be set in production")
+            if len(self.jwt_secret) < 32:
+                raise ValueError("JWT_SECRET must be at least 32 characters in production")
+        return self
 
 
 @lru_cache

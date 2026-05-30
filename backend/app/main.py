@@ -19,6 +19,7 @@ from app.api import (
     one_on_ones,
     simulator,
 )
+from app.core.config import get_settings
 from app.core.cosmos_client import cosmos_configured
 from app.core.tracing import instrument_fastapi, setup_tracing
 
@@ -52,19 +53,24 @@ app = FastAPI(
 )
 instrument_fastapi(app)
 
-# Allow localhost dev + any *.azurestaticapps.net (Static Web Apps default domain).
-# Override via CORS_ORIGINS env var if you need a tighter list later.
+# Explicit origins only in production. Override via CORS_ORIGINS (comma-separated).
 _default_origins = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "https://orange-pond-02df6f200.7.azurestaticapps.net",
 ]
 _env_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
 _origins = _env_origins or _default_origins
+_settings = get_settings()
+# Wildcard SWA regex only in local dev (PR preview domains).
+_cors_origin_regex = (
+    r"https://.*\.azurestaticapps\.net" if _settings.app_env == "local" else None
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
-    allow_origin_regex=r"https://.*\.azurestaticapps\.net",
+    allow_origin_regex=_cors_origin_regex,
     # JWT in Authorization header — no cookies, no credentials.
     allow_credentials=False,
     allow_methods=["*"],
