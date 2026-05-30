@@ -7,6 +7,7 @@ from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DEV_JWT_SECRET = "atlaslens-dev-secret-change-me"
+_PROD_LIKE_ENVS = {"production", "prod", "container", "staging"}
 
 
 class Settings(BaseSettings):
@@ -45,11 +46,15 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_secrets(self) -> "Settings":
-        if self.app_env == "production":
+        if self.app_env.lower() in _PROD_LIKE_ENVS:
             if self.jwt_secret == _DEV_JWT_SECRET:
-                raise ValueError("JWT_SECRET must be set in production")
+                raise ValueError(
+                    f"JWT_SECRET must be overridden when APP_ENV={self.app_env!r}"
+                )
             if len(self.jwt_secret) < 32:
-                raise ValueError("JWT_SECRET must be at least 32 characters in production")
+                raise ValueError(
+                    "JWT_SECRET must be at least 32 characters in non-local envs"
+                )
         return self
 
 

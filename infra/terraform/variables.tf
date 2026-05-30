@@ -61,3 +61,9 @@ variable "backend_image_tag" {
   type        = string
   default     = "latest"
 }
+
+variable "frontend_image_tag" {
+  description = "Frontend image tag (CI overrides with the commit SHA)"
+  type        = string
+  default     = "latest"
+}

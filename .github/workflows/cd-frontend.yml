@@ -1,5 +1,9 @@
 name: cd-frontend
 
+# Frontend deploys to Azure Container Apps (nginx + Vite build).
+# The Static Web App is no longer the deployment target — see
+# docs/RUNBOOK.md for the migration notes.
+
 on:
   push:
     branches: [main]
@@ -18,24 +22,17 @@ concurrency:
 
 env:
   RG: atlaslens-rg
-  SWA: atlaslens-web
-  CONTAINER_APP: atlaslens-backend
+  BACKEND_APP: atlaslens-backend
+  FRONTEND_APP: atlaslens-web
+  IMAGE: atlaslens-frontend
 
 jobs:
   build-and-deploy:
-    name: build + deploy to SWA
+    name: build + push + update Container App
     runs-on: ubuntu-latest
     environment: production
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: azure/login@v2
         with:
@@ -43,41 +40,51 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Discover backend URL
-        id: backend
+      - name: Resolve ACR + tag + backend URL
+        id: vars
         run: |
-          URL=$(az containerapp show -g "${{ env.RG }}" -n "${{ env.CONTAINER_APP }}" --query "properties.configuration.ingress.fqdn" -o tsv)
-          echo "url=https://$URL" >> "$GITHUB_OUTPUT"
+          ACR=$(az acr list -g "${{ env.RG }}" --query "[0].name" -o tsv)
+          LOGIN=$(az acr show -n "$ACR" --query loginServer -o tsv)
+          TAG=$(echo "${{ github.sha }}" | cut -c1-12)
+          BACKEND_FQDN=$(az containerapp show -g "${{ env.RG }}" -n "${{ env.BACKEND_APP }}" --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "acr=$ACR"             >> "$GITHUB_OUTPUT"
+          echo "login=$LOGIN"         >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG"             >> "$GITHUB_OUTPUT"
+          echo "backend=https://$BACKEND_FQDN" >> "$GITHUB_OUTPUT"
 
-      - name: Write VITE_API_BASE
-        working-directory: frontend
+      - name: Build + push frontend image via ACR Tasks
         run: |
-          echo "VITE_API_BASE=${{ steps.backend.outputs.url }}" > .env.production
+          az acr build \
+            --registry "${{ steps.vars.outputs.acr }}" \
+            --image "${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
+            --image "${{ env.IMAGE }}:latest" \
+            --file frontend/Dockerfile \
+            .
 
-      - name: Install
-        working-directory: frontend
-        run: pnpm install --frozen-lockfile=false
-
-      - name: Approve esbuild build
-        working-directory: frontend
-        run: printf 'y\n' | pnpm approve-builds esbuild || true
-
-      - name: Build
-        working-directory: frontend
-        run: pnpm build
-
-      - name: Fetch SWA deploy token
-        id: swa
+      - name: Ensure frontend Container App exists
+        id: ensure_app
         run: |
-          TOKEN=$(az staticwebapp secrets list -g "${{ env.RG }}" -n "${{ env.SWA }}" --query "properties.apiKey" -o tsv)
-          echo "::add-mask::$TOKEN"
-          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+          if ! az containerapp show -g "${{ env.RG }}" -n "${{ env.FRONTEND_APP }}" >/dev/null 2>&1; then
+            echo "Frontend Container App does not exist yet — bootstrap it via 'terraform apply' (cd-infra)." >&2
+            exit 1
+          fi
 
-      - name: Deploy
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ steps.swa.outputs.token }}
-          action: upload
-          app_location: frontend/dist
-          skip_app_build: true
-          skip_api_build: true
+      - name: Update frontend Container App image
+        run: |
+          az containerapp update \
+            -g "${{ env.RG }}" -n "${{ env.FRONTEND_APP }}" \
+            --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
+            --set-env-vars BACKEND_URL=${{ steps.vars.outputs.backend }} PORT=8080
+
+      - name: Smoke test
+        run: |
+          URL=$(az containerapp show -g "${{ env.RG }}" -n "${{ env.FRONTEND_APP }}" --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "Frontend URL: https://$URL"
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "https://$URL/healthz")
+            echo "  attempt $i: $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "Frontend never returned 200" >&2
+          exit 1

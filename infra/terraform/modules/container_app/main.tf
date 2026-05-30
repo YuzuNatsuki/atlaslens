@@ -33,6 +33,11 @@ variable "jwt_secret" {
   type      = string
   sensitive = true
 }
+variable "extra_cors_origins" {
+  description = "Comma-separated list of extra allowed origins (e.g. the frontend Container App URL)."
+  type        = string
+  default     = ""
+}
 variable "tags" { type = map(string) }
 
 resource "azurerm_container_app_environment" "main" {
@@ -149,6 +154,10 @@ resource "azurerm_container_app" "backend" {
         value = "container"
       }
       env {
+        name  = "CORS_ORIGINS"
+        value = var.extra_cors_origins
+      }
+      env {
         name  = "AZURE_AI_FOUNDRY_PROJECT_ENDPOINT"
         value = var.foundry_project_endpoint
       }
@@ -156,9 +165,15 @@ resource "azurerm_container_app" "backend" {
   }
 
   tags = var.tags
+
+  # The frontend Container App is created in a separate module that depends on
+  # this one's environment_id. We don't need a Terraform link back, but the
+  # CORS_ORIGINS env var should be updated whenever the frontend FQDN changes
+  # (handled by `cd-infra` running a fresh apply after the frontend exists).
 }
 
 output "fqdn" { value = azurerm_container_app.backend.ingress[0].fqdn }
 output "backend_url" { value = "https://${azurerm_container_app.backend.ingress[0].fqdn}" }
 output "principal_id" { value = azurerm_container_app.backend.identity[0].principal_id }
 output "environment_id" { value = azurerm_container_app_environment.main.id }
+output "environment_default_domain" { value = azurerm_container_app_environment.main.default_domain }

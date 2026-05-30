@@ -6,33 +6,40 @@ EM のための Agentic AI Co-pilot。外部 SaaS 連携なしで、日報・1on
 
 ```
 Browser (React + Vite + Tailwind)
-  └── Azure Static Web Apps
-         │
-         │  REST (JWT Bearer)
-         ▼
-  FastAPI (Python 3.11) @ Azure Container Apps (Japan East)
-         │
-         ├── Azure OpenAI (gpt-4o / gpt-4o-mini / text-embedding-3-large)
-         │     └── Function Calling — Chat agentic loop (8 tools, max 4 rounds)
-         │
-         ├── Azure AI Foundry Agent Service
-         │     └── Analyzer Agent (thread + run, App Insights GenAI tracing)
-         │
-         ├── Foundry Prompt Flow (5-node DAG)
-         │     └── Org Impact Simulator (primary path)
-         │           └── Critic + Refiner agents (quality loop)
-         │
-         ├── Azure AI Search (provisioned; hybrid RAG planned)
-         ├── Cosmos DB Serverless (profiles, goals, daily, 1on1, org, credentials)
-         └── Application Insights (OpenTelemetry + AIAgentsInstrumentor)
+        │
+        │  same-origin fetch (/api/*)
+        ▼
+Frontend Container App  (nginx 1.27)
+        │
+        │  reverse proxy /api/* -> backend
+        ▼
+Backend  Container App  (FastAPI, Python 3.13)
+        │
+        ├── Azure OpenAI (gpt-4o / gpt-4o-mini / text-embedding-3-large)
+        │     └── Function Calling — Chat agentic loop (8 tools, max 4 rounds)
+        │
+        ├── Azure AI Foundry Agent Service
+        │     └── Analyzer Agent (thread + run, App Insights GenAI tracing)
+        │
+        ├── Foundry Prompt Flow (5-node DAG)
+        │     └── Org Impact Simulator (primary path)
+        │           └── Critic + Refiner agents (quality loop)
+        │
+        ├── Azure AI Search (provisioned; hybrid RAG planned)
+        ├── Cosmos DB Serverless (profiles, goals, daily, 1on1, org, credentials, ai_artefacts)
+        └── Application Insights (OpenTelemetry + AIAgentsInstrumentor)
 ```
+
+Both the frontend and backend run in the same Azure Container Apps environment. Browsers
+only see the frontend's URL; the backend FQDN is private to the environment from the
+user's point of view (no CORS preflight in the happy path).
 
 ## Modules (M1–M6)
 
 | Module | Purpose | Key API |
 |--------|---------|---------|
 | M1 Member 360 | Profile, OKR, recent daily/1on1, AI insights | `GET /api/members`, `POST …/insights` |
-| M2 Daily Pulse | Team daily report rollup + AI summary | `GET /api/daily-pulse/team-summary` |
+| M2 Daily Pulse | Team daily report rollup + AI summary (Cosmos-persisted) | `GET /api/daily-pulse/team-summary`, `POST .../generate`, `GET .../team-summaries` |
 | M3 1on1 Companion | Prep packet, minutes structuring, Cosmos save | `GET /api/one-on-ones/packet/{id}` |
 | M4 Goal Alignment | OKR vs activity alignment | Chat tool `get_goal_alignment` |
 | M5 Org Simulator | Structural change impact (Prompt Flow + Critic/Refiner) | `POST /api/simulator/simulate` |
@@ -70,8 +77,10 @@ UI exposes `_critique`, `_refined`, `_source` and a **SimulatorProgress** step l
 | Area | Implementation |
 |------|----------------|
 | Auth | JWT (HS256, 24h); demo accounts + optional per-member bcrypt |
-| Production secrets | `JWT_SECRET` required when `APP_ENV=production` (≥32 chars) |
-| CORS | Explicit origins (localhost + production SWA); wildcard `*.azurestaticapps.net` only in `local` |
+| Production secrets | `JWT_SECRET` rejected if default value when `APP_ENV ∈ {production, container, staging}`; Terraform generates a 48-char random one |
+| CORS | Explicit origins only; in container envs the frontend Container App URL is injected via `CORS_ORIGINS` |
+| Same-origin frontend | nginx in the frontend Container App proxies `/api/*` to backend, so the browser only sees one origin |
+| Persisted AI artefacts | Daily Pulse team summaries are stored in `ai_artefacts` (partition key `/kind`) |
 | IaC | Terraform + GitHub Actions (OIDC); `cd-infra` manual dispatch + destroy guard |
 | Identity | System-assigned Managed Identity for Azure services |
 

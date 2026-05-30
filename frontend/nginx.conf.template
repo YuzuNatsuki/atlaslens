@@ -1,0 +1,51 @@
+# AtlasLens frontend nginx config.
+#
+# - Serves the Vite build out of /usr/share/nginx/html.
+# - Falls back to /index.html for client-side React Router routes.
+# - Reverse-proxies /api/* to the backend Container App (BACKEND_URL env var).
+#
+# Container Apps targets port 8080 by default; we honour PORT for flexibility.
+
+server {
+    listen       ${PORT};
+    listen       [::]:${PORT};
+    server_name  _;
+
+    root   /usr/share/nginx/html;
+    index  index.html;
+
+    # Cache the hashed Vite assets aggressively.
+    location /assets/ {
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000, immutable";
+        try_files $uri =404;
+    }
+
+    # Reverse proxy: browser -> nginx -> backend Container App.
+    # Same-origin keeps JWT auth simple and avoids CORS preflight in the demo.
+    location /api/ {
+        proxy_pass         ${BACKEND_URL};
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 90s;
+        proxy_send_timeout 90s;
+    }
+
+    # Health probe for Container Apps.
+    location = /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    # SPA fallback — every non-asset route returns index.html.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Long timeouts on websockets just in case future tools use them.
+    proxy_buffering off;
+}

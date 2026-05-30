@@ -62,9 +62,12 @@ _default_origins = [
 _env_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
 _origins = _env_origins or _default_origins
 _settings = get_settings()
-# Wildcard SWA regex only in local dev (PR preview domains).
+# Allow PR-preview wildcards only in local dev. Production/container envs
+# rely on explicit CORS_ORIGINS (set by Terraform with the frontend FQDN).
 _cors_origin_regex = (
-    r"https://.*\.azurestaticapps\.net" if _settings.app_env == "local" else None
+    r"https://.*\.azurestaticapps\.net|https://.*\.azurecontainerapps\.io"
+    if _settings.app_env.lower() == "local"
+    else None
 )
 
 app.add_middleware(

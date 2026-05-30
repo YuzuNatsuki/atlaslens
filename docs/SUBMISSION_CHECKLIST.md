@@ -2,7 +2,8 @@
 
 ## 本番スモークテスト（録画前に実施）
 
-**URL**: https://orange-pond-02df6f200.7.azurestaticapps.net  
+**URL**: 新フロント Container App URL — `https://atlaslens-web.<env>.<region>.azurecontainerapps.io`（cd-infra apply 後に確定）  
+**旧 URL (参考)**: https://orange-pond-02df6f200.7.azurestaticapps.net  
 **EM アカウント**: `tanaka.ken@atlaslens.dev` / `atlaslens2026`
 
 | # | 操作 | 期待結果 | OK |
@@ -45,7 +46,7 @@ curl -s https://atlaslens-backend.politeisland-f552e471.japaneast.azurecontainer
 
 | 項目 | 値 |
 |------|-----|
-| 成果物 URL（アプリ） | https://orange-pond-02df6f200.7.azurestaticapps.net |
+| 成果物 URL（アプリ） | 新フロント Container App URL（cd-infra apply 後に確定） |
 | GitHub | https://github.com/YuzuNatsuki/atlaslens |
 | デモ動画 URL | （記入） |
 | Zenn 記事 URL | （記入） |

@@ -4,9 +4,13 @@
 
 Microsoft Agent Hackathon 2026 powered by Tokyo Electron Device への応募作品。
 
-- **Frontend**: https://orange-pond-02df6f200.7.azurestaticapps.net
+- **Frontend (本番)**: Container Apps — `https://atlaslens-web.<env-suffix>.japaneast.azurecontainerapps.io`（`cd-infra` apply 後に確定）
 - **Backend**: https://atlaslens-backend.politeisland-f552e471.japaneast.azurecontainerapps.io
+- **旧 Frontend (移行前)**: https://orange-pond-02df6f200.7.azurestaticapps.net
 - **Repo**: https://github.com/YuzuNatsuki/atlaslens
+
+> 2026-05-30 にフロントエンドを Static Web Apps から Container Apps（nginx + Vite ビルド）に移行しました。  
+> ブラウザは `/api/*` を相対パスで叩き、nginx がバックエンド Container App に reverse proxy します。同オリジンになるので CORS は最小化されています。
 
 ## デモアカウント
 
@@ -35,7 +39,8 @@ atlaslens-rg @ japaneast
 ├── atlaslens-appi             Application Insights (OTel 集約)
 ├── atlaslens-env              Container Apps env
 ├── atlaslens-backend          Container App (FastAPI + Prompt Flow runtime)
-└── atlaslens-web              Static Web App (React)
+├── atlaslens-web              Container App (nginx + Vite SPA, /api/* → backend)
+└── atlaslens-web-legacy       (Static Web App, retained for state continuity)
 
 atlaslens-tfstate-rg @ japaneast
 └── atlaslenstfstateb6e5a1     Terraform remote state (Storage Account)
@@ -48,7 +53,7 @@ atlaslens-tfstate-rg @ japaneast
 | `ci.yml` | PR | backend lint + tests, frontend build, `terraform plan` |
 | `cd-infra.yml` | **manual** `workflow_dispatch` only | `terraform apply` (production environment, destroy guard) |
 | `cd-backend.yml` | push to main, `backend/**` / `data/**` / `infra/prompt_flow/**` | `az acr build` + `containerapp update` |
-| `cd-frontend.yml` | push to main, `frontend/**` | `pnpm build` + Static Web Apps deploy |
+| `cd-frontend.yml` | push to main, `frontend/**` | `az acr build` (Dockerfile, multi-stage) + `containerapp update` |
 
 すべて **Workload Identity Federation (OIDC)** で Azure に認証。GitHub に保存されている secret は Azure 接続情報のみで、有効期限・自動失効ありの短命トークン。
 

@@ -4,8 +4,13 @@ output "backend_url" {
 }
 
 output "frontend_url" {
+  value       = module.frontend_container_app.url
+  description = "Public URL of the frontend Container App (nginx + Vite build)"
+}
+
+output "legacy_swa_url" {
   value       = module.static_web_app.url
-  description = "Public URL of the Static Web App"
+  description = "Pre-migration Static Web App URL (retained for state continuity)"
 }
 
 output "foundry_account" {
