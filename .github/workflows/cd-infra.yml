@@ -59,6 +59,7 @@ jobs:
           TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_demo_password: ${{ secrets.DEMO_PASSWORD }}
         run: terraform plan -input=false -out=tfplan
 
       - name: guard against destroys
@@ -82,4 +83,5 @@ jobs:
           TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_demo_password: ${{ secrets.DEMO_PASSWORD }}
         run: terraform apply -input=false -auto-approve tfplan

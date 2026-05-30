@@ -55,7 +55,7 @@ atlaslens-tfstate-rg @ japaneast
 | `cd-backend.yml` | push to main, `backend/**` / `data/**` / `infra/prompt_flow/**` | `az acr build` + `containerapp update` |
 | `cd-frontend.yml` | push to main, `frontend/**` | `az acr build` (Dockerfile, multi-stage) + `containerapp update` |
 
-すべて **Workload Identity Federation (OIDC)** で Azure に認証。GitHub に保存されている secret は Azure 接続情報のみで、有効期限・自動失効ありの短命トークン。
+すべて **Workload Identity Federation (OIDC)** で Azure に認証。Azure 接続は短命トークンで行い、デモログイン用のパスワードは GitHub Environment Secret `DEMO_PASSWORD` から Azure Container Apps secret として注入します（画面・README・ソースには表示しません）。
 
 ## 概要
 

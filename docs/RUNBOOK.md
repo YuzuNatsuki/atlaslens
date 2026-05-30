@@ -93,6 +93,7 @@ plan に destroy が含まれると失敗するガードあり。`allow_destroy=
 |------|-----|
 | `APP_ENV` | `container` |
 | `JWT_SECRET` | Terraform `random_password` 自動生成（32 文字以上）|
+| `DEMO_PASSWORD` | GitHub Environment Secret `DEMO_PASSWORD` から Container App secret `demo-password` として注入（ドキュメント・画面には非表示）|
 | `CORS_ORIGINS` | フロント Container App URL |
 | `BACKEND_URL` (frontend) | バックエンド Container App URL |
 

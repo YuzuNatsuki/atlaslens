@@ -33,6 +33,12 @@ variable "jwt_secret" {
   type      = string
   sensitive = true
 }
+variable "demo_password" {
+  description = "Out-of-band demo account password, passed via secret env DEMO_PASSWORD."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
 variable "extra_cors_origins" {
   description = "Comma-separated list of extra allowed origins (e.g. the frontend Container App URL)."
   type        = string
@@ -83,6 +89,10 @@ resource "azurerm_container_app" "backend" {
   secret {
     name  = "jwt-secret"
     value = var.jwt_secret
+  }
+  secret {
+    name  = "demo-password"
+    value = var.demo_password
   }
 
   ingress {
@@ -148,6 +158,10 @@ resource "azurerm_container_app" "backend" {
       env {
         name        = "JWT_SECRET"
         secret_name = "jwt-secret"
+      }
+      env {
+        name        = "DEMO_PASSWORD"
+        secret_name = "demo-password"
       }
       env {
         name  = "APP_ENV"

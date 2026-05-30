@@ -44,6 +44,13 @@ variable "jwt_secret" {
   default     = "atlaslens-dev-secret-change-me"
 }
 
+variable "demo_password" {
+  description = "Out-of-band demo account password. Injected as a Container App secret; never documented or committed."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "gpt4o_capacity_tpm" {
   description = "gpt-4o capacity in thousands of TPM"
   type        = number

@@ -117,6 +117,7 @@ module "container_app" {
   cosmos_endpoint          = module.cosmos.endpoint
   cosmos_key               = module.cosmos.primary_key
   jwt_secret               = local.effective_jwt_secret
+  demo_password            = var.demo_password
   extra_cors_origins       = "https://${var.name_prefix}-web.${module.container_app.environment_default_domain}"
   tags                     = var.tags
 }
