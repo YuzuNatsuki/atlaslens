@@ -69,17 +69,29 @@ jobs:
             echo "::warning::No Key Vault found in ${{ env.RG }}; skipping secret sync. (Run terraform apply first.)"
             exit 0
           fi
+
+          sync_secret() {
+            local name="$1"
+            local value="$2"
+            if [ -z "$value" ]; then
+              echo "::warning::$name GitHub secret is empty; keeping whatever's currently in KV."
+              return 0
+            fi
+
+            if az keyvault secret set --vault-name "$KV" --name "$name" --value "$value" --output none; then
+              echo "  · $name synced to $KV"
+            else
+              echo "::warning::Could not sync $name to $KV. Continuing with the existing Key Vault value."
+            fi
+          }
+
           if [ -n "${{ secrets.JWT_SECRET }}" ]; then
-            az keyvault secret set --vault-name "$KV" --name jwt-secret \
-              --value "${{ secrets.JWT_SECRET }}" --output none
-            echo "  · jwt-secret synced to $KV"
+            sync_secret "jwt-secret" "${{ secrets.JWT_SECRET }}"
           else
             echo "::warning::JWT_SECRET GitHub secret is empty; keeping whatever's currently in KV."
           fi
           if [ -n "${{ secrets.DEMO_PASSWORD }}" ]; then
-            az keyvault secret set --vault-name "$KV" --name demo-password \
-              --value "${{ secrets.DEMO_PASSWORD }}" --output none
-            echo "  · demo-password synced to $KV"
+            sync_secret "demo-password" "${{ secrets.DEMO_PASSWORD }}"
           else
             echo "::warning::DEMO_PASSWORD GitHub secret is empty; demo accounts may not work."
           fi
