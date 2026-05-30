@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Send, Trash2, Wand2, Wrench } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 import { api, type ChatMessage, type ToolCallTrace } from "@/lib/api";
 
@@ -24,6 +25,13 @@ export default function ChatPage() {
   const [draft, setDraft] = useState("");
   const [style, setStyle] = useState<string>("standard");
   const [customInstructions, setCustomInstructions] = useState<string>("");
+  const [styleToast, setStyleToast] = useState<string | null>(null);
+
+  const changeStyle = (key: string, label: string) => {
+    setStyle(key);
+    setStyleToast(`「${label}」スタイルを選択しました。次の回答から適用されます。`);
+    setTimeout(() => setStyleToast(null), 2500);
+  };
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const sendM = useMutation({
@@ -65,6 +73,7 @@ export default function ChatPage() {
   };
 
   const reset = () => {
+    if (messages.length > 0 && !confirm("会話履歴を削除しますか？")) return;
     setMessages([]);
     setDraft("");
     sendM.reset();
@@ -98,15 +107,20 @@ export default function ChatPage() {
               key={p.key}
               label={p.label}
               active={style === p.key}
-              onClick={() => setStyle(p.key)}
+              onClick={() => changeStyle(p.key, p.label)}
             />
           ))}
           <StyleChip
             label="カスタム"
             active={style === CUSTOM_KEY}
-            onClick={() => setStyle(CUSTOM_KEY)}
+            onClick={() => changeStyle(CUSTOM_KEY, "カスタム")}
           />
         </div>
+        {styleToast && (
+          <p className="mt-2 text-xs text-brand bg-brand/5 border border-brand/20 rounded px-2 py-1">
+            {styleToast}
+          </p>
+        )}
         {style === CUSTOM_KEY && (
           <div className="mt-3">
             <label className="text-xs text-slate-500">
@@ -282,15 +296,21 @@ function Bubble({
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
+        className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
           isUser
-            ? "bg-brand text-white"
+            ? "bg-brand text-white whitespace-pre-wrap"
             : pending
-              ? "bg-slate-100 text-slate-400 animate-pulse"
+              ? "bg-slate-100 text-slate-400 animate-pulse whitespace-pre-wrap"
               : "bg-slate-100 text-slate-800"
         }`}
       >
-        {content}
+        {isUser || pending ? (
+          content
+        ) : (
+          <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-slate-800 prose-strong:text-slate-800 prose-ul:my-1 prose-li:my-0">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,77 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api, type StructureChange } from "@/lib/api";
 import { pickText } from "@/lib/format";
+
+// Agent progress steps shown while the simulation is running.
+const SIM_STEPS = [
+  { id: "comms",     label: "Connector Agent",  detail: "報告・相談ラインへの影響を分析",  delay: 0 },
+  { id: "knowledge", label: "Knowledge Agent",  detail: "業務属人化リスクを評価",          delay: 2500 },
+  { id: "workload",  label: "Load Agent",       detail: "担当業務量の変化を試算",           delay: 5000 },
+  { id: "timeline",  label: "Schedule Agent",   detail: "実施ステップ案を立案",             delay: 8000 },
+  { id: "critic",    label: "Critic Agent",     detail: "出力品質をレビュー・改善点を抽出", delay: 12000 },
+  { id: "refine",    label: "Refiner Agent",    detail: "指摘を反映して最終出力を生成",     delay: 17000 },
+];
+
+function SimulatorProgress({ active }: { active: boolean }) {
+  const [done, setDone] = useState<Set<string>>(new Set());
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    if (!active) {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+      setDone(new Set());
+      return;
+    }
+    setDone(new Set());
+    SIM_STEPS.forEach((step) => {
+      const t = setTimeout(() => {
+        setDone((prev) => new Set([...prev, step.id]));
+      }, step.delay + 1800);
+      timers.current.push(t);
+    });
+    return () => {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+    };
+  }, [active]);
+
+  if (!active) return null;
+
+  return (
+    <div className="card border-brand/20 bg-brand/5">
+      <p className="text-xs font-semibold text-brand mb-3">エージェントが並列で分析しています…</p>
+      <div className="grid gap-2">
+        {SIM_STEPS.map((step) => {
+          const isDone = done.has(step.id);
+          const isCritic = step.id === "critic" || step.id === "refine";
+          return (
+            <div key={step.id} className="flex items-start gap-2 text-sm">
+              <span className="mt-0.5 shrink-0">
+                {isDone ? "✅" : isCritic ? "🧐" : "🤖"}
+              </span>
+              <div className="flex-1 min-w-0">
+                <span className={`font-medium ${isCritic ? "text-purple-700" : "text-slate-700"}`}>
+                  {step.label}
+                </span>
+                <span className="text-slate-400 ml-2 text-xs">{step.detail}</span>
+              </div>
+              <span className="text-xs shrink-0">
+                {isDone ? (
+                  <span className="text-emerald-600">完了</span>
+                ) : (
+                  <span className="text-slate-400 animate-pulse">処理中…</span>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const KIND_OPTIONS = [
   { value: "split_team", label: "チーム分割 (split_team)" },
@@ -189,6 +258,12 @@ export default function SimulatorPage() {
         </div>
       </section>
 
+      <SimulatorProgress active={simM.isPending} />
+      {!simM.isPending && !simM.data && (
+        <div className="border border-dashed border-slate-200 rounded-lg text-sm text-slate-400 text-center py-8">
+          「影響を確認する」を押すと、ここに分析結果が表示されます
+        </div>
+      )}
       {simM.data && <SimulationView result={simM.data} />}
     </div>
   );
@@ -315,11 +390,11 @@ function CritiqueBlock({ critique }: { critique: any }) {
   ].filter((s) => Array.isArray(s.items) && s.items.length > 0);
 
   return (
-    <details className="card border-purple-200 bg-purple-50/40">
+    <details className="card border-purple-200 bg-purple-50/40" open>
       <summary className="cursor-pointer text-sm font-medium text-purple-800">
-        Critic エージェントの所見
-        <span className="ml-2 text-xs text-purple-600">
-          ({verdict === "good" ? "問題なし" : "改善余地あり → 再生成で反映"})
+        🧐 Critic エージェントの所見
+        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${verdict === "good" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+          {verdict === "good" ? "問題なし" : "改善点を検出 → 再生成に反映済み"}
         </span>
       </summary>
       <p className="mt-2 text-xs text-slate-600">

@@ -1,10 +1,10 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Save } from "lucide-react";
 
 import { api } from "@/lib/api";
-import { pickText } from "@/lib/format";
+import { humanizeEvidenceId, pickText } from "@/lib/format";
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -13,6 +13,17 @@ function todayISO(): string {
 export default function OneOnOnePage() {
   const { memberId = "" } = useParams<{ memberId: string }>();
   const qc = useQueryClient();
+  const memberQ = useQuery({
+    queryKey: ["member", memberId],
+    queryFn: () => api.getMember(memberId),
+    enabled: Boolean(memberId),
+  });
+  const memberName = memberQ.data?.profile.name;
+
+  const membersQ = useQuery({ queryKey: ["members"], queryFn: api.listMembers });
+  const memberIndex: Record<string, string> = Object.fromEntries(
+    (membersQ.data?.members ?? []).map((mb) => [mb.id, mb.name]),
+  );
   const [rawNotes, setRawNotes] = useState("");
   const [heldOn, setHeldOn] = useState(todayISO());
   const [topics, setTopics] = useState("");
@@ -67,10 +78,20 @@ export default function OneOnOnePage() {
   });
 
   return (
-    <div className="grid gap-4 lg:gap-6 lg:grid-cols-2">
+    <div className="grid gap-4 lg:gap-6">
+      <div>
+        <Link to={memberId ? `/members/${memberId}` : "/"} className="text-sm text-slate-500 hover:text-brand">
+          ← {memberName ? `${memberName} の詳細に戻る` : "メンバー詳細に戻る"}
+        </Link>
+        <h1 className="text-xl sm:text-2xl font-bold mt-1">
+          {memberName ? `${memberName} との 1on1` : "1on1 準備"}
+        </h1>
+      </div>
+
+      <div className="grid gap-4 lg:gap-6 lg:grid-cols-2">
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">事前パケット</h2>
+          <h2 className="text-lg font-semibold">Step 1 — 事前パケット</h2>
           <button
             onClick={() => packetQ.refetch()}
             disabled={packetQ.isFetching}
@@ -102,7 +123,9 @@ export default function OneOnOnePage() {
               title="議論ポイント候補"
               items={(packetQ.data.packet.discussion_topics ?? []).map((t: any) => ({
                 primary: pickText(t),
-                secondary: Array.isArray(t?.evidence) ? t.evidence.join(", ") : undefined,
+                secondary: Array.isArray(t?.evidence)
+                  ? t.evidence.map((id: string) => humanizeEvidenceId(id, memberIndex)).join("、")
+                  : undefined,
               }))}
             />
             <SectionBlock
@@ -129,13 +152,13 @@ export default function OneOnOnePage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">議事録ドラフト + 記録保存</h2>
+        <h2 className="text-lg font-semibold mb-3">Step 2 — 議事録ドラフト + 記録保存</h2>
         <div className="card">
           <label className="text-xs text-slate-500">1on1 中のメモ（生）</label>
           <textarea
             value={rawNotes}
             onChange={(e) => setRawNotes(e.target.value)}
-            placeholder="話したことをそのままメモ。後で AI が整形します。"
+            placeholder="話したことをそのままメモしてください。後で AI が整形します。&#10;例: OKR 進捗は順調。大阪-東京の時差で朝会に参加しにくいと話していた。次回までに非同期の連絡手段を検討する。"
             className="w-full h-32 border border-slate-300 rounded p-2 text-sm mt-1"
           />
           <button
@@ -145,6 +168,11 @@ export default function OneOnOnePage() {
           >
             {draftM.isPending ? "整形中..." : "議事録に整形 + ToDo を抽出"}
           </button>
+          {draftM.data && (
+            <p className="mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1.5">
+              ✅ AI が整形しました。下のフォームに自動入力済みです。内容を確認・修正してから保存してください。
+            </p>
+          )}
         </div>
 
         <div className="card mt-3">
@@ -166,6 +194,7 @@ export default function OneOnOnePage() {
             <textarea
               value={topics}
               onChange={(e) => setTopics(e.target.value)}
+              placeholder={"例: OKR 進捗確認\nオンコール体制についての相談"}
               className="w-full h-16 border border-slate-300 rounded p-2 text-sm"
             />
           </Field>
@@ -173,6 +202,7 @@ export default function OneOnOnePage() {
             <textarea
               value={structuredNotes}
               onChange={(e) => setStructuredNotes(e.target.value)}
+              placeholder="1on1 の概要・決定事項・気づきをまとめて記録します。"
               className="w-full h-24 border border-slate-300 rounded p-2 text-sm"
             />
           </Field>
@@ -180,6 +210,7 @@ export default function OneOnOnePage() {
             <textarea
               value={todos}
               onChange={(e) => setTodos(e.target.value)}
+              placeholder={"例: EM: 非同期連絡ルールを来週までに整理する\n本人: SLO ダッシュボードのドラフトを共有する"}
               className="w-full h-20 border border-slate-300 rounded p-2 text-sm"
             />
           </Field>
@@ -187,6 +218,7 @@ export default function OneOnOnePage() {
             <textarea
               value={followUps}
               onChange={(e) => setFollowUps(e.target.value)}
+              placeholder={"例: 次回: ドラフト共有の確認\n前回: オンコール候補者の合意形成 → 完了したか確認"}
               className="w-full h-16 border border-slate-300 rounded p-2 text-sm"
             />
           </Field>
@@ -204,6 +236,7 @@ export default function OneOnOnePage() {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
 }

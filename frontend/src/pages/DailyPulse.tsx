@@ -47,6 +47,9 @@ export default function DailyPulsePage() {
       {summaryQ.isFetching && <p className="text-slate-500">AI が要約中…</p>}
       {summaryQ.data && (
         <div className="grid gap-3">
+          <div className="text-xs text-slate-400 flex items-center gap-1">
+            📎 参照データ: {summaryQ.data.report_count} 件の日報（{reportDate}）を Reporter エージェントが読み込みました
+          </div>
           {summaryQ.data.summary.tldr && (
             <div className="card">
               <h3 className="font-medium text-sm text-brand mb-2">TL;DR</h3>
