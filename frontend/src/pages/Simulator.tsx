@@ -85,13 +85,13 @@ function SimulatorProgress({ active }: { active: boolean }) {
 }
 
 const KIND_OPTIONS = [
-  { value: "split_team", label: "チーム分割 (split_team)" },
-  { value: "merge_teams", label: "チーム統合 (merge_teams)" },
-  { value: "move_member", label: "メンバー異動 (move_member)" },
-  { value: "change_manager", label: "上司・メンター変更 (change_manager)" },
-  { value: "promote", label: "昇進・役割変更 (promote)" },
-  { value: "hire", label: "新規採用 (hire)" },
-  { value: "other", label: "その他 (other)" },
+  { value: "split_team", label: "チーム分割" },
+  { value: "merge_teams", label: "チーム統合" },
+  { value: "move_member", label: "メンバー異動" },
+  { value: "change_manager", label: "上司・メンター変更" },
+  { value: "promote", label: "昇進・役割変更" },
+  { value: "hire", label: "新規採用" },
+  { value: "other", label: "その他" },
 ];
 
 const PRESETS: { name: string; change: StructureChange }[] = [

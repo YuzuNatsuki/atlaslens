@@ -30,6 +30,19 @@ export const api = {
     authedFetch<{ summaries: PastTeamSummary[] }>(
       "/api/daily-pulse/team-summaries",
     ),
+  teamSummaryRange: (start: string, end: string) =>
+    authedFetch<TeamRangeSummary>(
+      `/api/daily-pulse/team-summary/range?start_date=${start}&end_date=${end}`,
+    ),
+  regenerateTeamSummaryRange: (start: string, end: string) =>
+    authedFetch<TeamRangeSummary>("/api/daily-pulse/team-summary/range/generate", {
+      method: "POST",
+      body: JSON.stringify({ start_date: start, end_date: end, force: true }),
+    }),
+  listTeamSummariesRange: () =>
+    authedFetch<{ summaries: PastTeamRangeSummary[] }>(
+      "/api/daily-pulse/team-summaries/range",
+    ),
   simulate: (change: StructureChange) =>
     authedFetch<SimulationResult>("/api/simulator/simulate", {
       method: "POST",
@@ -48,7 +61,17 @@ export const api = {
     }),
   chatStyles: () =>
     authedFetch<{ styles: { key: string; label: string }[] }>("/api/chat/styles"),
+  chatHistory: () => authedFetch<ChatHistory>("/api/chat/history"),
+  clearChatHistory: () =>
+    authedFetch<void>("/api/chat/history", { method: "DELETE" }),
 };
+
+export interface ChatHistory {
+  messages: Array<ChatMessage & { tool_calls?: ToolCallTrace[] }>;
+  style: string;
+  style_instructions?: string | null;
+  updated_at?: string | null;
+}
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -180,6 +203,45 @@ export interface PastTeamSummary {
   date: string;
   generated_at?: string | null;
   report_count?: number | null;
+  model?: string | null;
+}
+
+export interface RangeMemberTrend {
+  summary?: string;
+  trend?: "良化" | "停滞" | "悪化" | "不変" | string;
+  evidence_dates?: string[];
+}
+
+export interface RangeRiskSignal {
+  member_name?: string;
+  kind?: "retention" | "friction" | "capacity" | "engagement" | "health" | string;
+  summary?: string;
+  evidence_dates?: string[];
+}
+
+export interface TeamRangeSummary {
+  start_date: string;
+  end_date: string;
+  report_count: number;
+  member_count: number;
+  summary: {
+    tldr?: string[];
+    themes?: string[];
+    by_member?: Record<string, RangeMemberTrend>;
+    risk_signals?: RangeRiskSignal[];
+    recommended_actions?: string[];
+  };
+  generated_at?: string | null;
+  from_cache?: boolean;
+}
+
+export interface PastTeamRangeSummary {
+  key?: string;
+  start_date?: string;
+  end_date?: string;
+  generated_at?: string | null;
+  report_count?: number | null;
+  member_count?: number | null;
   model?: string | null;
 }
 

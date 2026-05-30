@@ -64,7 +64,7 @@ const emNav: NavItem[] = [
   },
   {
     to: "/chat",
-    label: "AI チャット",
+    label: "AI アシスタント",
     hint: "チームの状況について質問",
     icon: MessageSquare,
     section: "EM 向け",

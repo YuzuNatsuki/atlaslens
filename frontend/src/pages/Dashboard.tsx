@@ -115,7 +115,7 @@ export default function Dashboard() {
             />
             <HeroStat
               icon={<MessageSquare size={14} />}
-              label="AI チャット"
+              label="AI アシスタント"
               value={"\u00A0"}
               sub="ツール 8 種を自律呼出"
               cta="開く"

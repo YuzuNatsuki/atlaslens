@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
   ChevronRight,
   MessageSquare,
   Send,
+  Sparkles,
   Trash2,
   Wand2,
   Wrench,
@@ -12,7 +13,7 @@ import {
 import ReactMarkdown from "react-markdown";
 
 import { api, type ChatMessage, type ToolCallTrace } from "@/lib/api";
-import { InlineAlert, PageHeader } from "@/components/ui";
+import { InlineAlert, PageHeader, formatJpDate } from "@/components/ui";
 
 const STARTERS = [
   "今、最も注意して見るべきメンバーは誰ですか？",
@@ -24,17 +25,41 @@ const STARTERS = [
 const CUSTOM_KEY = "custom";
 
 export default function ChatPage() {
+  const qc = useQueryClient();
   const stylesQ = useQuery({ queryKey: ["chat-styles"], queryFn: api.chatStyles });
+  const historyQ = useQuery({
+    queryKey: ["chat-history"],
+    queryFn: api.chatHistory,
+    refetchOnWindowFocus: false,
+  });
   const presets = stylesQ.data?.styles ?? [];
 
   interface DisplayMessage extends ChatMessage {
     tool_calls?: ToolCallTrace[];
   }
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const [draft, setDraft] = useState("");
   const [style, setStyle] = useState<string>("standard");
   const [customInstructions, setCustomInstructions] = useState<string>("");
   const [styleToast, setStyleToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (historyLoaded || historyQ.isLoading || !historyQ.isSuccess) return;
+    const h = historyQ.data;
+    if (h && h.messages.length > 0) {
+      setMessages(
+        h.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+          tool_calls: m.tool_calls,
+        })),
+      );
+    }
+    if (h?.style) setStyle(h.style);
+    if (h?.style_instructions) setCustomInstructions(h.style_instructions);
+    setHistoryLoaded(true);
+  }, [historyQ.data, historyQ.isLoading, historyQ.isSuccess, historyLoaded]);
 
   const changeStyle = (key: string, label: string) => {
     setStyle(key);
@@ -51,14 +76,24 @@ export default function ChatPage() {
         style_instructions: style === CUSTOM_KEY ? customInstructions : undefined,
       }),
     onSuccess: (data) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.reply,
-          tool_calls: data.tool_calls,
-        },
-      ]);
+      setMessages((prev) => {
+        const next = [
+          ...prev,
+          {
+            role: "assistant" as const,
+            content: data.reply,
+            tool_calls: data.tool_calls,
+          },
+        ];
+        qc.setQueryData(["chat-history"], (old: { updated_at?: string | null } | undefined) => ({
+          ...(typeof old === "object" && old ? old : {}),
+          messages: next,
+          style,
+          style_instructions: style === CUSTOM_KEY ? customInstructions : null,
+          updated_at: new Date().toISOString(),
+        }));
+        return next;
+      });
     },
   });
 
@@ -80,150 +115,197 @@ export default function ChatPage() {
     sendM.mutate(sendable);
   };
 
-  const reset = () => {
+  const clearHistoryM = useMutation({
+    mutationFn: () => api.clearChatHistory(),
+    onSuccess: () => {
+      qc.setQueryData(["chat-history"], {
+        messages: [],
+        style: "standard",
+        style_instructions: null,
+        updated_at: null,
+      });
+    },
+  });
+
+  const reset = async () => {
     if (messages.length > 0 && !confirm("会話履歴を削除しますか？")) return;
+    try {
+      await clearHistoryM.mutateAsync();
+    } catch {
+      // still clear locally if server fails
+    }
     setMessages([]);
     setDraft("");
+    setHistoryLoaded(true);
     sendM.reset();
   };
 
+  const empty = messages.length === 0 && !sendM.isPending;
+
   return (
-    <div className="grid gap-4 max-w-3xl mx-auto">
+    <div className="grid gap-4">
       <PageHeader
-        title="EM チャット"
-        subtitle="チームの最新スナップショットを参照しながら、自由に質問できます。AI は質問に応じて自動的にツールを呼び出します。"
+        title="AI アシスタント"
+        subtitle="チームの最新スナップショットを参照しながら、自由に質問できます。会話は自動で保存され、次回も続きから使えます。"
         actions={
-          <button
-            onClick={reset}
-            className="btn-ghost btn-xs"
-            disabled={messages.length === 0}
-          >
-            <Trash2 size={12} /> 履歴クリア
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            {historyQ.data?.updated_at && (
+              <span className="text-[11px] text-slate-400">
+                保存 {formatJpDate(historyQ.data.updated_at)}
+              </span>
+            )}
+            <button
+              onClick={() => void reset()}
+              className="btn-ghost btn-xs"
+              disabled={messages.length === 0 || clearHistoryM.isPending}
+            >
+              <Trash2 size={12} /> 履歴クリア
+            </button>
+          </div>
         }
       />
 
-      <section className="card">
-        <h2 className="eyebrow mb-2 flex items-center gap-1">
-          <Wand2 size={12} /> 回答スタイル
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {presets.map((p) => (
-            <StyleChip
-              key={p.key}
-              label={p.label}
-              active={style === p.key}
-              onClick={() => changeStyle(p.key, p.label)}
-            />
-          ))}
-          <StyleChip
-            label="カスタム"
-            active={style === CUSTOM_KEY}
-            onClick={() => changeStyle(CUSTOM_KEY, "カスタム")}
-          />
-        </div>
-        {styleToast && (
-          <div className="mt-2">
-            <InlineAlert tone="info">{styleToast}</InlineAlert>
-          </div>
-        )}
-        {style === CUSTOM_KEY && (
-          <div className="mt-3">
-            <label className="label">
-              カスタム指示（口調・長さ・出力フォーマットなど）
-            </label>
-            <textarea
-              value={customInstructions}
-              onChange={(e) => setCustomInstructions(e.target.value)}
-              placeholder={
-                "例: 全て表形式 (Markdown) で。1 行目に結論、2 行目に根拠を必ず書く。\n或いは: コードレビュアー口調で、率直かつ歯切れよく。"
-              }
-              className="textarea font-mono"
-            />
-            <p className="text-xs text-amber-700 mt-1">
-              ※ カスタム指示を入力してから質問してください。
-            </p>
-          </div>
-        )}
-      </section>
-
-      <div
-        ref={scrollRef}
-        className="card overflow-y-auto scroll-area"
-        style={{ minHeight: 360, maxHeight: "calc(100vh - 520px)" }}
-      >
-        {messages.length === 0 && !sendM.isPending && (
-          <div>
-            <div className="flex items-center gap-2 text-slate-500 mb-3">
-              <MessageSquare size={14} />
-              <p className="text-sm">
-                よく聞かれる質問から選ぶか、下の入力欄から自由に質問してください。
-              </p>
+      <div className="grid gap-4 lg:grid-cols-[300px_1fr] xl:grid-cols-[320px_1fr]">
+        {/* ----- left rail: style + starters ----- */}
+        <aside className="grid gap-4 lg:sticky lg:top-20 lg:self-start">
+          <section className="card">
+            <h2 className="eyebrow mb-2 flex items-center gap-1">
+              <Wand2 size={12} /> 回答スタイル
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {presets.map((p) => (
+                <StyleChip
+                  key={p.key}
+                  label={p.label}
+                  active={style === p.key}
+                  onClick={() => changeStyle(p.key, p.label)}
+                />
+              ))}
+              <StyleChip
+                label="カスタム"
+                active={style === CUSTOM_KEY}
+                onClick={() => changeStyle(CUSTOM_KEY, "カスタム")}
+              />
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
+            {styleToast && (
+              <div className="mt-2">
+                <InlineAlert tone="info">{styleToast}</InlineAlert>
+              </div>
+            )}
+            {style === CUSTOM_KEY && (
+              <div className="mt-3">
+                <label className="label">カスタム指示</label>
+                <textarea
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                  placeholder={
+                    "例: 全て表形式 (Markdown) で。1 行目に結論、2 行目に根拠を必ず書く。"
+                  }
+                  className="textarea font-mono"
+                  style={{ minHeight: 110 }}
+                />
+                <p className="text-xs text-amber-700 mt-1">
+                  ※ カスタム指示を入力してから質問してください。
+                </p>
+              </div>
+            )}
+          </section>
+
+          <section className="card">
+            <h2 className="eyebrow mb-2 flex items-center gap-1">
+              <Sparkles size={12} /> よく聞かれる質問
+            </h2>
+            <div className="grid gap-2">
               {STARTERS.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => send(s)}
-                  className="text-left text-sm border border-slate-200 rounded-lg p-3 hover:bg-brand/5 hover:border-brand/30 transition"
+                  className="text-left text-xs leading-relaxed border border-slate-200 rounded-lg p-2.5 hover:bg-brand/5 hover:border-brand/30 transition"
                 >
                   {s}
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          </section>
+        </aside>
 
-        <div className="grid gap-3">
-          {messages.map((m, i) => (
-            <div key={i} className="grid gap-1">
-              {m.tool_calls && m.tool_calls.length > 0 && (
-                <ToolCallsBlock calls={m.tool_calls} />
-              )}
-              <Bubble role={m.role} content={m.content} />
-            </div>
-          ))}
-          {sendM.isPending && <Bubble role="assistant" content="..." pending />}
-          {sendM.isError && (
-            <InlineAlert tone="error">
-              {(sendM.error as Error).message || "送信失敗"}
-            </InlineAlert>
-          )}
-        </div>
-      </div>
+        {/* ----- right: chat thread + composer ----- */}
+        <div className="grid grid-rows-[1fr_auto] gap-3 min-h-[calc(100vh-220px)]">
+          <section
+            ref={scrollRef}
+            className="card overflow-y-auto scroll-area"
+            style={{ minHeight: 360 }}
+          >
+            {empty && (
+              <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 gap-3 py-10">
+                <span className="grid place-items-center w-12 h-12 rounded-2xl bg-brand-gradient text-white shadow-pop">
+                  <MessageSquare size={20} />
+                </span>
+                <div className="grid gap-1">
+                  <p className="text-sm font-medium text-slate-700">
+                    会話を始めましょう
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    左の「よく聞かれる質問」から選ぶか、下に直接入力してください。
+                  </p>
+                </div>
+              </div>
+            )}
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(draft);
-        }}
-        className="card flex gap-2"
-      >
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            {!empty && (
+              <div className="grid gap-3">
+                {messages.map((m, i) => (
+                  <div key={i} className="grid gap-1">
+                    {m.tool_calls && m.tool_calls.length > 0 && (
+                      <ToolCallsBlock calls={m.tool_calls} />
+                    )}
+                    <Bubble role={m.role} content={m.content} />
+                  </div>
+                ))}
+                {sendM.isPending && <Bubble role="assistant" content="..." pending />}
+                {sendM.isError && (
+                  <InlineAlert tone="error">
+                    {(sendM.error as Error).message || "送信失敗"}
+                  </InlineAlert>
+                )}
+              </div>
+            )}
+          </section>
+
+          <form
+            onSubmit={(e) => {
               e.preventDefault();
               send(draft);
-            }
-          }}
-          placeholder="質問を入力（⌘/Ctrl + Enter で送信）"
-          className="textarea flex-1"
-          style={{ minHeight: 80, maxHeight: 200 }}
-        />
-        <button
-          type="submit"
-          className="btn-primary self-end"
-          disabled={
-            !draft.trim() ||
-            sendM.isPending ||
-            (style === CUSTOM_KEY && !customInstructions.trim())
-          }
-        >
-          <Send size={14} /> 送信
-        </button>
-      </form>
+            }}
+            className="card flex gap-2 items-end"
+          >
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  send(draft);
+                }
+              }}
+              placeholder="質問を入力（⌘/Ctrl + Enter で送信）"
+              className="textarea flex-1"
+              style={{ minHeight: 80, maxHeight: 200 }}
+            />
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={
+                !draft.trim() ||
+                sendM.isPending ||
+                (style === CUSTOM_KEY && !customInstructions.trim())
+              }
+            >
+              <Send size={14} /> 送信
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
