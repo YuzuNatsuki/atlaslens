@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save } from "lucide-react";
+import { CalendarCheck, NotebookPen, Save } from "lucide-react";
 
 import { meApi } from "@/lib/meApi";
+import {
+  EmptyState,
+  InlineAlert,
+  PageHeader,
+  SectionHeader,
+  SkeletonCard,
+} from "@/components/ui";
 
 export default function MyOneOnOnes() {
   const qc = useQueryClient();
@@ -14,7 +21,7 @@ export default function MyOneOnOnes() {
 
   useEffect(() => {
     if (prepQ.data) setNotes(prepQ.data.notes ?? "");
-  }, [prepQ.data?.notes]);
+  }, [prepQ.data?.notes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveM = useMutation({
     mutationFn: () => meApi.savePrepNotes(notes),
@@ -25,44 +32,57 @@ export default function MyOneOnOnes() {
   });
 
   return (
-    <div className="grid gap-4 sm:gap-6">
-      <h1 className="text-xl sm:text-2xl font-bold">マイ 1on1</h1>
+    <div className="grid gap-6">
+      <PageHeader
+        title="マイ 1on1"
+        subtitle="次回 1on1 の準備メモと、過去の 1on1 履歴を確認できます。"
+      />
 
       <section className="card">
-        <h2 className="font-semibold mb-1">次回 1on1 で話したいこと</h2>
-        <p className="text-xs text-slate-500 mb-3">
-          このメモは EM の 1on1 事前パケットに反映されます。いつでも更新できます。
-        </p>
+        <SectionHeader
+          icon={<NotebookPen size={16} className="text-brand" />}
+          title="次回 1on1 で話したいこと"
+          subtitle="このメモは EM の事前パケットに反映されます。いつでも更新できます。"
+        />
         <textarea
           value={notes}
           onChange={(e) => {
             setNotes(e.target.value);
             setStatusMsg(null);
           }}
-          placeholder={"例:\n- 評価のフィードバック\n- 来期のチャレンジ案\n- 設計レビューに参加したい"}
-          className="w-full h-32 border border-slate-300 rounded p-2 text-sm"
+          placeholder={
+            "例:\n- 評価のフィードバック\n- 来期のチャレンジ案\n- 設計レビューに参加したい"
+          }
+          className="textarea"
+          style={{ minHeight: 140 }}
         />
-        <div className="flex items-center gap-3 mt-2">
+        <div className="flex items-center gap-3 mt-2 flex-wrap">
           <button
             onClick={() => saveM.mutate()}
             disabled={saveM.isPending}
-            className="btn-primary flex items-center gap-1"
+            className="btn-primary"
           >
             <Save size={14} />
             {saveM.isPending ? "保存中…" : "保存"}
           </button>
           {prepQ.data?.updated_at && (
-            <span className="text-xs text-slate-500">最終更新: {prepQ.data.updated_at}</span>
+            <span className="meta">最終更新: {prepQ.data.updated_at}</span>
           )}
-          {statusMsg && <span className="text-sm text-emerald-700">{statusMsg}</span>}
+          {statusMsg && <InlineAlert tone="success">{statusMsg}</InlineAlert>}
         </div>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">1on1 履歴</h2>
-        {historyQ.isLoading && <p className="text-slate-500">読み込み中…</p>}
+        <SectionHeader
+          icon={<CalendarCheck size={16} className="text-brand" />}
+          title="1on1 履歴"
+        />
+        {historyQ.isLoading && <SkeletonCard lines={3} />}
         {historyQ.data && historyQ.data.one_on_ones.length === 0 && (
-          <p className="text-slate-500">まだ 1on1 の記録がありません。</p>
+          <EmptyState
+            title="まだ 1on1 の記録がありません"
+            description="EM が記録すると、ここに表示されます。"
+          />
         )}
         <div className="grid gap-3">
           {(historyQ.data?.one_on_ones ?? [])
@@ -71,14 +91,16 @@ export default function MyOneOnOnes() {
             .map((o) => (
               <article key={o.id} className="card">
                 <header className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 mb-2">
-                  <span className="font-medium">{new Date(o.held_at).toLocaleString()}</span>
-                  <span className="text-xs text-slate-500">{o.topics.join(" · ")}</span>
+                  <span className="font-medium">
+                    {new Date(o.held_at).toLocaleString("ja-JP")}
+                  </span>
+                  <span className="meta truncate">{o.topics.join(" · ")}</span>
                 </header>
                 <p className="text-sm whitespace-pre-wrap">{o.notes}</p>
                 {o.todos.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-xs text-slate-500 mb-1">ToDo</p>
-                    <ul className="text-sm list-disc ml-5">
+                    <p className="eyebrow mb-1">ToDo</p>
+                    <ul className="text-sm list-disc ml-5 grid gap-0.5">
                       {o.todos.map((t, i) => (
                         <li key={i}>{t}</li>
                       ))}
@@ -87,8 +109,8 @@ export default function MyOneOnOnes() {
                 )}
                 {o.follow_ups.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-xs text-slate-500 mb-1">フォローアップ</p>
-                    <ul className="text-sm list-disc ml-5">
+                    <p className="eyebrow mb-1">フォローアップ</p>
+                    <ul className="text-sm list-disc ml-5 grid gap-0.5">
                       {o.follow_ups.map((f, i) => (
                         <li key={i}>{f}</li>
                       ))}

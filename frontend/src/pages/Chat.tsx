@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Send, Trash2, Wand2, Wrench } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  MessageSquare,
+  Send,
+  Trash2,
+  Wand2,
+  Wrench,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { api, type ChatMessage, type ToolCallTrace } from "@/lib/api";
+import { InlineAlert, PageHeader } from "@/components/ui";
 
 const STARTERS = [
   "今、最も注意して見るべきメンバーは誰ですか？",
@@ -54,20 +63,19 @@ export default function ChatPage() {
   });
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages, sendM.isPending]);
 
   const send = (text: string) => {
     const content = text.trim();
     if (!content || sendM.isPending) return;
-    if (style === CUSTOM_KEY && !customInstructions.trim()) {
-      // Refuse silently — user must give custom instructions.
-      return;
-    }
+    if (style === CUSTOM_KEY && !customInstructions.trim()) return;
     const next: DisplayMessage[] = [...messages, { role: "user", content }];
     setMessages(next);
     setDraft("");
-    // Send only `role`+`content` upstream — strip the local tool_calls trace.
     const sendable: ChatMessage[] = next.map(({ role, content }) => ({ role, content }));
     sendM.mutate(sendable);
   };
@@ -80,25 +88,23 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="grid gap-3 sm:gap-4 max-w-3xl mx-auto">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold">EM チャット</h1>
-          <p className="text-sm text-slate-500">
-            チームの最新スナップショットを参照しながら、自由に質問できます。
-          </p>
-        </div>
-        <button
-          onClick={reset}
-          className="btn-ghost text-xs flex items-center gap-1"
-          disabled={messages.length === 0}
-        >
-          <Trash2 size={12} /> 履歴クリア
-        </button>
-      </header>
+    <div className="grid gap-4 max-w-3xl mx-auto">
+      <PageHeader
+        title="EM チャット"
+        subtitle="チームの最新スナップショットを参照しながら、自由に質問できます。AI は質問に応じて自動的にツールを呼び出します。"
+        actions={
+          <button
+            onClick={reset}
+            className="btn-ghost btn-xs"
+            disabled={messages.length === 0}
+          >
+            <Trash2 size={12} /> 履歴クリア
+          </button>
+        }
+      />
 
       <section className="card">
-        <h2 className="text-xs text-slate-500 mb-2 flex items-center gap-1">
+        <h2 className="eyebrow mb-2 flex items-center gap-1">
           <Wand2 size={12} /> 回答スタイル
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -117,13 +123,13 @@ export default function ChatPage() {
           />
         </div>
         {styleToast && (
-          <p className="mt-2 text-xs text-brand bg-brand/5 border border-brand/20 rounded px-2 py-1">
-            {styleToast}
-          </p>
+          <div className="mt-2">
+            <InlineAlert tone="info">{styleToast}</InlineAlert>
+          </div>
         )}
         {style === CUSTOM_KEY && (
           <div className="mt-3">
-            <label className="text-xs text-slate-500">
+            <label className="label">
               カスタム指示（口調・長さ・出力フォーマットなど）
             </label>
             <textarea
@@ -132,7 +138,7 @@ export default function ChatPage() {
               placeholder={
                 "例: 全て表形式 (Markdown) で。1 行目に結論、2 行目に根拠を必ず書く。\n或いは: コードレビュアー口調で、率直かつ歯切れよく。"
               }
-              className="mt-1 w-full h-24 border border-slate-300 rounded p-2 text-sm font-mono"
+              className="textarea font-mono"
             />
             <p className="text-xs text-amber-700 mt-1">
               ※ カスタム指示を入力してから質問してください。
@@ -143,20 +149,23 @@ export default function ChatPage() {
 
       <div
         ref={scrollRef}
-        className="card overflow-y-auto"
-        style={{ minHeight: 360, maxHeight: "calc(100vh - 480px)" }}
+        className="card overflow-y-auto scroll-area"
+        style={{ minHeight: 360, maxHeight: "calc(100vh - 520px)" }}
       >
         {messages.length === 0 && !sendM.isPending && (
           <div>
-            <p className="text-sm text-slate-500 mb-3">
-              よく聞かれる質問から選ぶか、下の入力欄から自由に質問してください。
-            </p>
+            <div className="flex items-center gap-2 text-slate-500 mb-3">
+              <MessageSquare size={14} />
+              <p className="text-sm">
+                よく聞かれる質問から選ぶか、下の入力欄から自由に質問してください。
+              </p>
+            </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {STARTERS.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => send(s)}
-                  className="text-left text-sm border border-slate-200 rounded-lg p-3 hover:bg-slate-50"
+                  className="text-left text-sm border border-slate-200 rounded-lg p-3 hover:bg-brand/5 hover:border-brand/30 transition"
                 >
                   {s}
                 </button>
@@ -176,9 +185,9 @@ export default function ChatPage() {
           ))}
           {sendM.isPending && <Bubble role="assistant" content="..." pending />}
           {sendM.isError && (
-            <p className="text-sm text-rose-700">
+            <InlineAlert tone="error">
               {(sendM.error as Error).message || "送信失敗"}
-            </p>
+            </InlineAlert>
           )}
         </div>
       </div>
@@ -199,12 +208,13 @@ export default function ChatPage() {
               send(draft);
             }
           }}
-          placeholder="質問を入力 (⌘/Ctrl + Enter で送信)"
-          className="flex-1 border border-slate-300 rounded p-2 text-sm h-20 resize-none"
+          placeholder="質問を入力（⌘/Ctrl + Enter で送信）"
+          className="textarea flex-1"
+          style={{ minHeight: 80, maxHeight: 200 }}
         />
         <button
           type="submit"
-          className="btn-primary self-end flex items-center gap-1"
+          className="btn-primary self-end"
           disabled={
             !draft.trim() ||
             sendM.isPending ||
@@ -232,8 +242,8 @@ function StyleChip({
       onClick={onClick}
       className={`px-3 py-1.5 rounded-full text-xs border transition ${
         active
-          ? "bg-brand text-white border-brand"
-          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+          ? "bg-brand text-white border-brand shadow-sm"
+          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 hover:border-slate-400"
       }`}
     >
       {label}
@@ -250,15 +260,16 @@ function ToolCallsBlock({ calls }: { calls: ToolCallTrace[] }) {
         className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-700"
       >
         {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        <Wrench size={12} />
-        AI が {calls.length} 件の情報を参照しました
+        <Wrench size={12} className="text-brand" />
+        <span>AI が {calls.length} 件の情報を参照しました</span>
       </button>
       {open && (
         <ul className="mt-2 grid gap-1 ml-4">
           {calls.map((c, i) => (
-            <li key={i} className="border border-slate-200 rounded p-2 bg-slate-50">
-              <div className="font-mono text-[11px] text-brand">
-                {c.name}({Object.keys(c.arguments).length > 0 ? formatArgs(c.arguments) : ""})
+            <li key={i} className="border border-slate-200 rounded-lg p-2 bg-slate-50">
+              <div className="font-mono text-[11px] text-brand-dark">
+                {c.name}(
+                {Object.keys(c.arguments).length > 0 ? formatArgs(c.arguments) : ""})
               </div>
               <div className="text-[11px] text-slate-500">
                 {c.elapsed_ms} ms · {c.result_preview.length} 字 returned
@@ -294,20 +305,20 @@ function Bubble({
 }) {
   const isUser = role === "user";
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} animate-fade-in`}>
       <div
-        className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm ${
           isUser
-            ? "bg-brand text-white whitespace-pre-wrap"
+            ? "bg-brand text-white whitespace-pre-wrap rounded-br-sm"
             : pending
-              ? "bg-slate-100 text-slate-400 animate-pulse whitespace-pre-wrap"
-              : "bg-slate-100 text-slate-800"
+              ? "bg-slate-100 text-slate-400 animate-pulse whitespace-pre-wrap rounded-bl-sm"
+              : "bg-slate-100 text-slate-800 rounded-bl-sm"
         }`}
       >
         {isUser || pending ? (
           content
         ) : (
-          <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-slate-800 prose-strong:text-slate-800 prose-ul:my-1 prose-li:my-0">
+          <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-slate-800 prose-strong:text-slate-800 prose-ul:my-1 prose-li:my-0 prose-p:my-1">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         )}

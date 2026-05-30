@@ -10,6 +10,7 @@ import {
   type MemberPayload,
   type Team,
 } from "@/lib/adminApi";
+import { PageHeader } from "@/components/ui";
 
 type Tab = "org" | "members";
 
@@ -17,13 +18,11 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("org");
 
   return (
-    <div className="grid gap-4">
-      <header>
-        <h1 className="text-xl sm:text-2xl font-bold">アカウント / 組織管理</h1>
-        <p className="text-sm text-slate-500">
-          Admin だけがアクセスできるページです。組織階層とメンバー全件をここで CRUD します。
-        </p>
-      </header>
+    <div className="grid gap-6">
+      <PageHeader
+        title="アカウント / 組織管理"
+        subtitle="Admin だけがアクセスできるページです。組織階層とメンバー全件をここで CRUD します。"
+      />
       <nav className="flex gap-2">
         <TabButton
           active={tab === "org"}

@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Play, Sparkles, Workflow } from "lucide-react";
 
 import { api, type StructureChange } from "@/lib/api";
 import { pickText } from "@/lib/format";
+import {
+  EmptyState,
+  InlineAlert,
+  PageHeader,
+  SectionHeader,
+} from "@/components/ui";
 
 // Agent progress steps shown while the simulation is running.
 const SIM_STEPS = [
@@ -41,8 +48,10 @@ function SimulatorProgress({ active }: { active: boolean }) {
   if (!active) return null;
 
   return (
-    <div className="card border-brand/20 bg-brand/5">
-      <p className="text-xs font-semibold text-brand mb-3">エージェントが並列で分析しています…</p>
+    <div className="panel-accent animate-fade-in">
+      <p className="text-xs font-semibold text-brand-dark mb-3 flex items-center gap-1">
+        <Sparkles size={12} /> エージェントが並列で分析しています…
+      </p>
       <div className="grid gap-2">
         {SIM_STEPS.map((step) => {
           const isDone = done.has(step.id);
@@ -53,7 +62,9 @@ function SimulatorProgress({ active }: { active: boolean }) {
                 {isDone ? "✅" : isCritic ? "🧐" : "🤖"}
               </span>
               <div className="flex-1 min-w-0">
-                <span className={`font-medium ${isCritic ? "text-purple-700" : "text-slate-700"}`}>
+                <span
+                  className={`font-medium ${isCritic ? "text-purple-700" : "text-slate-700"}`}
+                >
                   {step.label}
                 </span>
                 <span className="text-slate-400 ml-2 text-xs">{step.detail}</span>
@@ -158,23 +169,41 @@ export default function SimulatorPage() {
   const canSubmit = !!description.trim() && !simM.isPending;
 
   return (
-    <div className="grid gap-4 sm:gap-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold">組織改編シミュレーション</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          異動や体制変更の案を入力すると、AI が 4 つの観点（連携・知識・負荷・スケジュール）を並列で確認し、想定される影響と背景を整理してお伝えします。
-        </p>
-      </div>
+    <div className="grid gap-6">
+      <PageHeader
+        title="組織改編シミュレーション"
+        subtitle="異動や体制変更の案を入力すると、AI が 4 つの観点（連携・知識・負荷・スケジュール）を並列で分析し、Critic エージェントが品質をレビューします。"
+      />
+
+      <section>
+        <SectionHeader
+          icon={<Workflow size={16} className="text-brand" />}
+          title="定型パターンを使う"
+          subtitle="クリックすると下のフォームに反映されます"
+        />
+        <div className="grid gap-2 sm:grid-cols-3">
+          {PRESETS.map((p, i) => (
+            <button
+              key={i}
+              onClick={() => loadPreset(p)}
+              className="card text-left text-sm hover:shadow-pop hover:border-brand/30 transition"
+            >
+              <p className="font-medium text-slate-800">{p.name}</p>
+              <p className="text-xs text-slate-400 mt-1">{p.change.kind}</p>
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="card">
-        <h2 className="font-semibold mb-3">変更案を記述</h2>
+        <SectionHeader title="変更案を記述" />
         <div className="grid gap-3">
           <label className="grid gap-1">
-            <span className="text-xs text-slate-500">変更の種類</span>
+            <span className="label">変更の種類</span>
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value)}
-              className="border border-slate-300 rounded px-3 py-2"
+              className="input-sm"
             >
               {KIND_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -185,19 +214,18 @@ export default function SimulatorPage() {
           </label>
 
           <label className="grid gap-1">
-            <span className="text-xs text-slate-500">
-              内容（自由記述・できるだけ具体的に）
-            </span>
+            <span className="label">内容（自由記述・できるだけ具体的に）</span>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="例: 渡辺 翔 のメンターを 鈴木 から 佐藤 に変更し、3 か月でフロントエンドからインフラへ移籍させる"
-              className="w-full h-24 border border-slate-300 rounded p-2 text-sm"
+              className="textarea"
+              style={{ minHeight: 100 }}
             />
           </label>
 
           <div className="grid gap-1">
-            <span className="text-xs text-slate-500">関係するメンバー（複数選択可）</span>
+            <span className="label">関係するメンバー（複数選択可）</span>
             <div className="flex flex-wrap gap-2">
               {(membersQ.data?.members ?? []).map((m) => {
                 const selected = affectedMemberIds.includes(m.id);
@@ -208,7 +236,7 @@ export default function SimulatorPage() {
                     onClick={() => toggleMember(m.id)}
                     className={`px-3 py-1.5 rounded-full text-xs border transition ${
                       selected
-                        ? "bg-brand text-white border-brand"
+                        ? "bg-brand text-white border-brand shadow-sm"
                         : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
                     }`}
                   >
@@ -220,49 +248,43 @@ export default function SimulatorPage() {
           </div>
 
           <details className="text-xs text-slate-500">
-            <summary className="cursor-pointer">詳細パラメータ（任意・JSON）</summary>
+            <summary className="cursor-pointer hover:text-slate-700">
+              詳細パラメータ（任意・JSON）
+            </summary>
             <textarea
               value={paramJson}
               onChange={(e) => setParamJson(e.target.value)}
-              className="mt-2 w-full h-24 border border-slate-300 rounded p-2 font-mono"
+              className="mt-2 textarea font-mono"
               placeholder='{"team_a_members": ["mem001"]}'
+              style={{ minHeight: 100 }}
             />
           </details>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => simM.mutate()} disabled={!canSubmit} className="btn-primary">
-              {simM.isPending ? "影響を分析しています… (約 15 秒)" : "影響を確認する"}
+            <button
+              onClick={() => simM.mutate()}
+              disabled={!canSubmit}
+              className="btn-primary"
+            >
+              <Play size={14} />
+              {simM.isPending ? "分析中… (約 15 秒)" : "影響を確認する"}
             </button>
             {simM.isError && (
-              <span className="text-sm text-rose-700">
+              <InlineAlert tone="error">
                 {(simM.error as Error).message || "失敗しました"}
-              </span>
+              </InlineAlert>
             )}
           </div>
         </div>
       </section>
 
-      <section>
-        <h2 className="font-semibold text-sm text-slate-500 mb-2">定型パターンを使う</h2>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {PRESETS.map((p, i) => (
-            <button
-              key={i}
-              onClick={() => loadPreset(p)}
-              className="card text-left text-sm hover:shadow-md transition"
-            >
-              {p.name}
-              <p className="text-xs text-slate-400 mt-1">{p.change.kind}</p>
-            </button>
-          ))}
-        </div>
-      </section>
-
       <SimulatorProgress active={simM.isPending} />
       {!simM.isPending && !simM.data && (
-        <div className="border border-dashed border-slate-200 rounded-lg text-sm text-slate-400 text-center py-8">
-          「影響を確認する」を押すと、ここに分析結果が表示されます
-        </div>
+        <EmptyState
+          icon={<Workflow size={28} />}
+          title="まだ結果はありません"
+          description="「影響を確認する」を押すと、ここに分析結果が表示されます。"
+        />
       )}
       {simM.data && <SimulationView result={simM.data} />}
     </div>
@@ -270,9 +292,9 @@ export default function SimulatorPage() {
 }
 
 const RISK_TONE: Record<string, string> = {
-  low: "bg-emerald-100 text-emerald-700",
-  medium: "bg-amber-100 text-amber-700",
-  high: "bg-rose-100 text-rose-700",
+  low: "pill-emerald",
+  medium: "pill-amber",
+  high: "pill-rose",
 };
 
 const RISK_LABEL: Record<string, string> = {
@@ -291,21 +313,21 @@ function SimulationView({ result }: { result: any }) {
   const { impact, members } = result;
   const source = impact?._source;
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3 animate-fade-in">
       {impact.overall_risk_level && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-          <span className={`pill ${RISK_TONE[impact.overall_risk_level] ?? ""}`}>
+        <div className="card flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <span className={RISK_TONE[impact.overall_risk_level] ?? "pill-slate"}>
             総合リスク: {RISK_LABEL[impact.overall_risk_level] ?? impact.overall_risk_level}
           </span>
           {source && (
-            <span className="text-xs text-slate-500">
-              処理ルート: {SOURCE_LABEL[source] ?? source}
-            </span>
+            <span className="meta">処理ルート: {SOURCE_LABEL[source] ?? source}</span>
           )}
           {impact._refined && (
-            <span className="pill bg-purple-100 text-purple-700">Critic レビュー反映済み</span>
+            <span className="pill bg-purple-100 text-purple-700">
+              Critic レビュー反映済み
+            </span>
           )}
-          <p className="text-sm text-slate-700">{impact.summary}</p>
+          <p className="text-sm text-slate-700 flex-1">{impact.summary}</p>
         </div>
       )}
       {impact._critique && <CritiqueBlock critique={impact._critique} />}
@@ -425,7 +447,7 @@ function CritiqueBlock({ critique }: { critique: any }) {
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="card">
-      <h3 className="font-medium text-sm text-brand mb-2">{title}</h3>
+      <h3 className="font-medium text-sm text-brand-dark mb-2">{title}</h3>
       <ul className="list-disc ml-5 text-sm grid gap-1">{children}</ul>
     </div>
   );

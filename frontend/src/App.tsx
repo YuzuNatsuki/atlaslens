@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
-import { Menu, X, LogOut, User } from "lucide-react";
+import { Menu, X, LogOut, User, Compass } from "lucide-react";
 
 import { useCurrentUser, logout, type CurrentUser } from "@/lib/auth";
 
@@ -18,19 +18,22 @@ import MyGoals from "./pages/me/MyGoals";
 import MyDaily from "./pages/me/MyDaily";
 import MyOneOnOnes from "./pages/me/MyOneOnOnes";
 
-const emNav = [
-  { to: "/", label: "ダッシュボード" },
-  { to: "/daily-pulse", label: "日報サマリー" },
-  { to: "/simulator", label: "組織改編シミュレーション" },
-  { to: "/chat", label: "チャット" },
+interface NavItem {
+  to: string;
+  label: string;
+  hint?: string;
+}
+
+const emNav: NavItem[] = [
+  { to: "/", label: "ダッシュボード", hint: "チーム全員の状況" },
+  { to: "/daily-pulse", label: "日報サマリー", hint: "AI 要約 + 履歴" },
+  { to: "/simulator", label: "組織改編シミュレーション", hint: "Plan→Critique→Refine" },
+  { to: "/chat", label: "チャット", hint: "ツールを呼ぶ Agent" },
 ];
 
-const adminNav = [
-  ...emNav,
-  { to: "/admin", label: "管理" },
-];
+const adminNav: NavItem[] = [...emNav, { to: "/admin", label: "管理", hint: "アカウント / 組織" }];
 
-const memberNav = [
+const memberNav: NavItem[] = [
   { to: "/me", label: "ホーム" },
   { to: "/me/goals", label: "目標" },
   { to: "/me/daily", label: "日報" },
@@ -53,11 +56,12 @@ export default function App() {
   const navItems = isAdmin ? adminNav : isEmLike ? emNav : memberNav;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header user={user} navItems={navItems} />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6">
+      <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-6 sm:py-8 flex-1">
         {isEmLike ? <EmRoutes isAdmin={isAdmin} /> : <MemberRoutes />}
       </main>
+      <Footer />
     </div>
   );
 }
@@ -94,26 +98,36 @@ function Header({
   navItems,
 }: {
   user: CurrentUser;
-  navItems: { to: string; label: string }[];
+  navItems: NavItem[];
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const roleBadge =
+    user.role === "admin" ? "Admin" : user.role === "em" ? "EM-Copilot" : "メンバー";
+
   return (
-    <header className="border-b border-slate-200 bg-white sticky top-0 z-30">
-      <div className="mx-auto max-w-7xl flex items-center px-4 sm:px-6 py-3">
-        <span className="text-xl font-bold text-brand">AtlasLens</span>
-        <span className="ml-3 text-xs text-slate-500 hidden sm:inline">
-          {user.role === "em" ? "EM-Copilot" : "メンバー"}
-        </span>
-        <nav className="ml-10 hidden md:flex gap-4">
+    <header className="border-b border-slate-200 bg-white/95 backdrop-blur sticky top-0 z-30">
+      <div className="mx-auto max-w-7xl flex items-center px-4 sm:px-6 py-3 gap-4">
+        <NavLink to="/" className="flex items-center gap-2 shrink-0">
+          <span className="grid place-items-center w-7 h-7 rounded-lg bg-brand text-white">
+            <Compass size={16} />
+          </span>
+          <span className="text-lg font-bold text-slate-900 tracking-tight">AtlasLens</span>
+          <span className="hidden sm:inline pill-brand text-[10px] uppercase">{roleBadge}</span>
+        </NavLink>
+
+        <nav className="ml-4 hidden md:flex gap-1 flex-1">
           {navItems.map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
               end={n.to === "/" || n.to === "/me"}
+              title={n.hint}
               className={({ isActive }) =>
-                `text-sm px-2 py-1 rounded ${
-                  isActive ? "text-brand font-semibold" : "text-slate-600 hover:text-slate-900"
+                `text-sm px-3 py-1.5 rounded-md transition ${
+                  isActive
+                    ? "bg-brand/10 text-brand-dark font-semibold"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`
               }
             >
@@ -121,30 +135,34 @@ function Header({
             </NavLink>
           ))}
         </nav>
+
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <span className="hidden sm:flex items-center gap-1 text-xs text-slate-500">
-            <User size={14} />
-            <span className="font-medium text-slate-700">{user.profile?.name ?? user.name}</span>
+          <span className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500">
+            <User size={14} className="text-slate-400" />
+            <span className="font-medium text-slate-700">
+              {user.profile?.name ?? user.name}
+            </span>
           </span>
           <button
             onClick={logout}
-            className="hidden sm:flex btn-ghost items-center gap-1 text-xs"
+            className="hidden sm:inline-flex btn-ghost btn-xs items-center gap-1"
             title="ログアウト"
           >
-            <LogOut size={14} />
+            <LogOut size={12} />
             ログアウト
           </button>
           <button
             className="md:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100"
             onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle navigation"
+            aria-label="メニューを開閉"
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
+
       {menuOpen && (
-        <nav className="md:hidden border-t border-slate-200 bg-white">
+        <nav className="md:hidden border-t border-slate-200 bg-white animate-fade-in">
           {navItems.map((n) => (
             <NavLink
               key={n.to}
@@ -154,19 +172,22 @@ function Header({
               className={({ isActive }) =>
                 `block px-4 py-3 text-sm border-b border-slate-100 ${
                   isActive
-                    ? "text-brand font-semibold bg-brand/5"
+                    ? "text-brand-dark font-semibold bg-brand/5"
                     : "text-slate-700 hover:bg-slate-50"
                 }`
               }
             >
-              {n.label}
+              <div>{n.label}</div>
+              {n.hint && <div className="text-[11px] text-slate-400 mt-0.5">{n.hint}</div>}
             </NavLink>
           ))}
-          <div className="px-4 py-3 text-xs text-slate-500">
-            <p className="mb-2">
-              <User size={14} className="inline" />{" "}
-              <span className="font-medium text-slate-700">{user.profile?.name ?? user.name}</span>
-            </p>
+          <div className="px-4 py-3 text-xs text-slate-500 flex items-center justify-between">
+            <span className="inline-flex items-center gap-1">
+              <User size={14} className="text-slate-400" />
+              <span className="font-medium text-slate-700">
+                {user.profile?.name ?? user.name}
+              </span>
+            </span>
             <button
               onClick={logout}
               className="inline-flex items-center gap-1 text-rose-700"
@@ -178,6 +199,19 @@ function Header({
         </nav>
       )}
     </header>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-slate-200 bg-white">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 text-xs text-slate-400 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+        <span>AtlasLens — EM Co-pilot powered by Azure AI Foundry</span>
+        <span>
+          観察対象は行動データのみ。感情・メンタル状態は推測しません。
+        </span>
+      </div>
+    </footer>
   );
 }
 

@@ -21,6 +21,15 @@ export const api = {
     }),
   teamSummary: (date: string) =>
     authedFetch<TeamSummary>(`/api/daily-pulse/team-summary?report_date=${date}`),
+  regenerateTeamSummary: (date: string) =>
+    authedFetch<TeamSummary>("/api/daily-pulse/team-summary/generate", {
+      method: "POST",
+      body: JSON.stringify({ report_date: date, force: true }),
+    }),
+  listTeamSummaries: () =>
+    authedFetch<{ summaries: PastTeamSummary[] }>(
+      "/api/daily-pulse/team-summaries",
+    ),
   simulate: (change: StructureChange) =>
     authedFetch<SimulationResult>("/api/simulator/simulate", {
       method: "POST",
@@ -158,6 +167,15 @@ export interface TeamSummary {
     blockers_to_surface?: Record<string, unknown>;
     themes?: string[];
   };
+  generated_at?: string | null;
+  from_cache?: boolean;
+}
+
+export interface PastTeamSummary {
+  date: string;
+  generated_at?: string | null;
+  report_count?: number | null;
+  model?: string | null;
 }
 
 export interface StructureChange {
