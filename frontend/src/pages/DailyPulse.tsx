@@ -22,7 +22,7 @@ import {
   formatJpDate,
 } from "@/components/ui";
 
-const DEFAULT_DATE = "2026-05-12";
+const DEFAULT_DATE = "2026-05-19";
 
 export default function DailyPulsePage() {
   const [reportDate, setReportDate] = useState<string>(DEFAULT_DATE);

@@ -8,3 +8,24 @@
   progress_pct: 20
   status: at_risk
   member_id: mem004
+  career_vision_1y: バックエンド・フロントエンドの一方で「ここなら任せられる」と言われる領域を 1 つ作る
+  career_vision_3y: ミドルエンジニアとして、決済 API またはデザインシステムの一部 owner を担う
+  skills_to_grow:
+  - 質問する力（タイミング / 粒度）
+  - PR 設計
+  - テスト設計
+  - チームコミュニケーション
+  roles_to_explore:
+  - バックエンドエンジニア（決済）
+  - フロントエンドエンジニア（デザインシステム）
+  support_needed: 定期的な 1on1（隔週）、メンターからの返信 SLA、自分が呼ばれていない会議への招待検討。
+- id: g-mem004-2
+  period: 2026-Q2
+  objective: 自分の強みと志向を発見し、進む方向の仮説を持つ
+  key_results:
+  - バックエンド / フロントエンドの両方でタスクを 3 件以上経験
+  - 半期末に「自分の強みと志向」レビューを A4 1 枚で言語化
+  - 同期 / 先輩 3 名以上に自分の強みについてフィードバックをもらう
+  progress_pct: 10
+  status: at_risk
+  member_id: mem004

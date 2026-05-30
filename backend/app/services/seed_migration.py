@@ -157,3 +157,90 @@ def migrate_if_empty() -> dict[str, int]:
             log.info("seeded %d meetings", result["meetings"])
 
     return result
+
+
+# Allowed scopes for force_reseed_from_files(). The "all" alias expands to
+# everything, so the admin endpoint can just take a free-form string.
+_RESEED_SCOPES = {
+    "members",
+    "goals",
+    "daily_reports",
+    "one_on_ones",
+    "meetings",
+}
+
+
+def force_reseed_from_files(scope: str = "all") -> dict[str, int]:
+    """Force-upsert file-based seed data into Cosmos.
+
+    Unlike :func:`migrate_if_empty`, this always upserts: it is meant for
+    refreshing demo content after the bundled YAML / Markdown files have
+    been updated. Existing rows with the same ``id`` are overwritten; rows
+    that no longer exist in the files are left alone (no deletes).
+
+    ``scope`` can be ``"all"`` or a comma-separated list of any of:
+    ``members, goals, daily_reports, one_on_ones, meetings``.
+    """
+    ensure_all_containers()
+
+    requested: set[str]
+    if scope.strip().lower() in {"", "all"}:
+        requested = set(_RESEED_SCOPES)
+    else:
+        requested = {p.strip() for p in scope.split(",") if p.strip()}
+        unknown = requested - _RESEED_SCOPES
+        if unknown:
+            raise ValueError(
+                f"Unknown reseed scope(s): {sorted(unknown)}. "
+                f"Allowed: {sorted(_RESEED_SCOPES) + ['all']}"
+            )
+
+    profiles = _file_profiles()
+    if not profiles:
+        log.warning("force_reseed: no file profiles found, nothing to do")
+        return {}
+
+    result: dict[str, int] = {}
+
+    if "members" in requested:
+        enriched = org_repo.apply_assignments_to(profiles)
+        result["members"] = cosmos_repo.bulk_upsert_members(enriched)
+        log.info("force_reseed: upserted %d members", result["members"])
+
+    if "goals" in requested:
+        all_goals: list[Goal] = []
+        for m in profiles:
+            all_goals.extend(_file_goals(m.id))
+        if all_goals:
+            result["goals"] = cosmos_repo.bulk_upsert_goals(all_goals)
+            log.info("force_reseed: upserted %d goals", result["goals"])
+
+    if "daily_reports" in requested:
+        all_reports: list[DailyReport] = []
+        for m in profiles:
+            all_reports.extend(_file_daily(m.id))
+        if all_reports:
+            result["daily_reports"] = cosmos_repo.bulk_upsert_daily(all_reports)
+            log.info(
+                "force_reseed: upserted %d daily reports", result["daily_reports"]
+            )
+
+    if "one_on_ones" in requested:
+        all_one_on_ones: list[OneOnOne] = []
+        for m in profiles:
+            all_one_on_ones.extend(_file_one_on_ones(m.id))
+        if all_one_on_ones:
+            result["one_on_ones"] = cosmos_repo.bulk_upsert_one_on_ones(
+                all_one_on_ones
+            )
+            log.info(
+                "force_reseed: upserted %d one_on_ones", result["one_on_ones"]
+            )
+
+    if "meetings" in requested:
+        meetings = _file_meetings()
+        if meetings:
+            result["meetings"] = cosmos_repo.bulk_upsert_meetings(meetings)
+            log.info("force_reseed: upserted %d meetings", result["meetings"])
+
+    return result

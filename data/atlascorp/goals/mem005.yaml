@@ -8,3 +8,24 @@
   progress_pct: 30
   status: at_risk
   member_id: mem005
+  career_vision_1y: QA 自動化のチーム横断オーナーとして、複数プロダクトのテスト戦略をリードする
+  career_vision_3y: SET（Software Engineer in Test）として、QA エンジニアリングの社内キャリアパスを確立する第一人者
+  skills_to_grow:
+  - テストアーキテクチャ設計
+  - 非同期コミュニケーションの設計（議事録 / RFC）
+  - リモート前提のチームファシリテーション
+  roles_to_explore:
+  - QA テックリード
+  - SET / テストアーキテクト
+  - SRE × QA のハイブリッドロール
+  support_needed: 大阪リモート前提の意思決定プロセス、時短時間外の議論を非同期に切り替える運用、月 1 程度の出張 or 全員集合の合意。
+- id: g-mem005-2
+  period: 2026-Q2
+  objective: 時短勤務でも価値を最大化する「働き方の型」を確立する
+  key_results:
+  - 自分の関わる定例の 80% を 16:30 以前に終了させる
+  - 非同期決定プロセス（RFC / 議事録テンプレ）をチームに 1 本提案
+  - 月 1 回、東京メンバーと対面 or オンライン全員集合の機会を恒常化
+  progress_pct: 15
+  status: at_risk
+  member_id: mem005

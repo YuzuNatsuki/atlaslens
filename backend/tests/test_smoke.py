@@ -29,6 +29,59 @@ def test_unauthorized_chat():
     assert res.status_code == 401
 
 
+def test_admin_reseed_unauthorized():
+    """/api/admin/reseed must require admin auth (not even anonymous)."""
+    res = client.post("/api/admin/reseed", json={"scope": "all"})
+    assert res.status_code == 401
+
+
+def test_force_reseed_rejects_unknown_scope(monkeypatch):
+    from app.services import seed_migration
+
+    # Stub Cosmos bootstrap so the test can run without a Cosmos account.
+    monkeypatch.setattr(seed_migration, "ensure_all_containers", lambda: None)
+    monkeypatch.setattr(seed_migration, "_file_profiles", lambda: ["x"])
+
+    with pytest.raises(ValueError):
+        seed_migration.force_reseed_from_files("daily_reports,bogus_kind")
+
+
+def test_unauthorized_chat_history():
+    assert client.get("/api/chat/history").status_code == 401
+    assert client.delete("/api/chat/history").status_code == 401
+
+
+def test_chat_history_round_trip_without_cosmos(monkeypatch):
+    from app.services import chat_history
+
+    monkeypatch.setattr(chat_history, "cosmos_configured", lambda: False)
+    chat_history.clear_session("em001")
+    assert chat_history.get_session("em001") is None
+
+    saved = chat_history.save_session(
+        "em001",
+        messages=[
+            {"role": "user", "content": "こんにちは"},
+            {
+                "role": "assistant",
+                "content": "返答です",
+                "tool_calls": [{"name": "list_team", "arguments": {}, "result_preview": "x", "elapsed_ms": 1}],
+            },
+        ],
+        style="concise",
+    )
+    assert len(saved["messages"]) == 2
+    assert saved["style"] == "concise"
+
+    loaded = chat_history.get_session("em001")
+    assert loaded is not None
+    assert loaded["messages"][0]["content"] == "こんにちは"
+    assert loaded["messages"][1]["tool_calls"][0]["name"] == "list_team"
+
+    chat_history.clear_session("em001")
+    assert chat_history.get_session("em001") is None
+
+
 def test_unauthorized_team_health():
     res = client.get("/api/health/team")
     assert res.status_code == 401

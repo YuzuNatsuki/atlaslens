@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from app.core.auth import AuthContext, get_auth_context, require_admin
 from app.models.schemas import Department, Division, MemberProfile, Role, Team
 from app.services import admin_dashboard, cosmos_repo, org_repo
+from app.services.seed_migration import force_reseed_from_files
 
 router = APIRouter()
 
@@ -27,6 +28,33 @@ async def _admin_only(auth: AuthContext = Depends(get_auth_context)) -> AuthCont
 async def get_dashboard(_: AuthContext = Depends(_admin_only)) -> dict:
     """Aggregated KPIs (members, daily reports, 1on1, OKR, AI generations)."""
     return admin_dashboard.compute_dashboard()
+
+
+# ---------- Force re-seed (refresh demo / sample data into Cosmos) ----------
+
+
+class ReseedPayload(BaseModel):
+    # Comma-separated scope, e.g. "daily_reports,goals" or "all".
+    scope: str = Field(default="all", max_length=200)
+
+
+@router.post("/reseed")
+async def reseed_cosmos_from_files(
+    payload: ReseedPayload,
+    _: AuthContext = Depends(_admin_only),
+) -> dict:
+    """Force-upsert the bundled file seed (YAML / Markdown) into Cosmos.
+
+    Use after the demo content under ``data/atlascorp/`` has been refreshed
+    — ``migrate_if_empty`` only fires on empty containers, so it cannot pick
+    up content changes once the system has run once. Existing rows with the
+    same id are overwritten; no rows are deleted.
+    """
+    try:
+        result = force_reseed_from_files(payload.scope)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"reseeded": result, "scope": payload.scope}
 
 
 # ---------- Org tree ----------

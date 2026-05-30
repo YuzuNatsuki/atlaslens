@@ -8,3 +8,25 @@
   progress_pct: 50
   status: on_track
   member_id: mem003
+  career_vision_1y: フロントエンドリードとして、デザインシステム + アクセシビリティを横断で見るロール
+  career_vision_3y: 自社プロダクトの UX 品質を統括するロール（プロダクト UX エンジニア or デザインエンジニアリングマネージャー）
+  skills_to_grow:
+  - 横断的な合意形成
+  - プロダクトマネジメント基礎
+  - 評価面談の受け方 / キャリア交渉
+  - 英語（OSS 貢献）
+  roles_to_explore:
+  - フロントエンドリード
+  - デザインエンジニアリングマネージャー
+  - プロダクト UX エンジニア
+  support_needed: アクセシビリティとデザインシステムを「事業に直結する専門性」として評価軸に含める制度設計。社外発信機会の公式バックアップ。
+- id: g-mem003-2
+  period: 2026-Q2
+  objective: アクセシビリティ文化をプロダクト全体に根付かせる
+  key_results:
+  - 全プロダクトに「アクセシビリティ責任者」を明示
+  - アクセシビリティ社内 LT を月 1 回継続（参加者 20 名以上）
+  - プロダクト 1 つで AA 認証取得を目指す
+  progress_pct: 25
+  status: at_risk
+  member_id: mem003

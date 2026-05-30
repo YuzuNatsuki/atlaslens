@@ -8,3 +8,24 @@
   progress_pct: 60
   status: on_track
   member_id: mem002
+  career_vision_1y: 決済領域のアーキテクトとして、サービス全体の設計判断を主導できるポジションを確立
+  career_vision_3y: スタッフエンジニア（または Principal）として、複数サービスを跨ぐ横串の技術判断を担う
+  skills_to_grow:
+  - アーキテクチャ設計
+  - ドキュメンテーション
+  - 育成設計（メンタリングフレームワーク化）
+  - スタッフ向け影響範囲評価
+  roles_to_explore:
+  - スタッフエンジニア
+  - 決済領域アーキテクト
+  support_needed: メンタリング工数を業務時間として明示的に計上できる仕組みと、シニア→スタッフ評価軸でのメンタリングの位置付け。
+- id: g-mem002-2
+  period: 2026-Q2
+  objective: 技術リーダーシップとメンタリングを両立するモデルケースを社内で確立する
+  key_results:
+  - 育成対象 1 名（渡辺）の独り立ち時期を明示的に合意
+  - 「シニア + 育成」工数配分の見える化資料を 1 本作成
+  - 来期評価制度の議論に「育成貢献」項目の追加を提案
+  progress_pct: 30
+  status: on_track
+  member_id: mem002
