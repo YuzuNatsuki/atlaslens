@@ -1,4 +1,10 @@
-"""Daily Pulse (M2) services — daily report draft + EM team summary."""
+"""Daily Pulse (M2) services — daily report draft + EM team summary.
+
+Team summaries are persisted to Cosmos via `artefact_store` so that:
+- Repeated views by any EM return the same generated summary instantly.
+- Summaries survive container restarts and replicas.
+- The user can choose to regenerate (force=True) and overwrite.
+"""
 
 from __future__ import annotations
 
@@ -6,8 +12,15 @@ from datetime import date as date_type
 from datetime import timedelta
 
 from app.agents.reporter_agent import draft_member_daily, summarize_day
-from app.core.cache import cache
+from app.services.artefact_store import (
+    delete_artefact,
+    get_artefact,
+    list_artefacts,
+    save_artefact,
+)
 from app.services.data_loader import DataLoader
+
+ARTEFACT_KIND = "team-summary"
 
 
 async def draft_daily_report(
@@ -39,8 +52,27 @@ async def draft_daily_report(
     return {"member_id": member_id, "date": report_date.isoformat(), "draft": draft}
 
 
-async def summarize_team_day(report_date: date_type, loader: DataLoader) -> dict:
+async def summarize_team_day(
+    report_date: date_type,
+    loader: DataLoader,
+    *,
+    force: bool = False,
+) -> dict:
+    """Return a Cosmos-persisted team summary, or compute one when missing/forced."""
+    date_key = report_date.isoformat()
     reports = loader.daily_reports_on(report_date)
+
+    if not force:
+        cached = get_artefact(ARTEFACT_KIND, date_key)
+        if cached is not None:
+            return {
+                "date": date_key,
+                "report_count": cached.get("report_count", len(reports)),
+                "summary": cached["payload"],
+                "generated_at": cached.get("generated_at"),
+                "from_cache": True,
+            }
+
     members = {m.id: m.name for m in loader.load_profiles()}
     payload = [
         {
@@ -51,12 +83,35 @@ async def summarize_team_day(report_date: date_type, loader: DataLoader) -> dict
         }
         for r in reports
     ]
-    summary = await cache.get_or_compute(
-        f"team-summary:{report_date.isoformat()}",
-        lambda: summarize_day(payload, members),
+    summary = await summarize_day(payload, members)
+    saved = save_artefact(
+        ARTEFACT_KIND,
+        date_key,
+        summary,
+        extra={"report_count": len(reports), "model": "gpt-4o"},
     )
     return {
-        "date": report_date.isoformat(),
+        "date": date_key,
         "report_count": len(reports),
         "summary": summary,
+        "generated_at": saved.get("generated_at"),
+        "from_cache": False,
     }
+
+
+async def list_team_summaries(*, limit: int = 30) -> list[dict]:
+    """Return summary metadata, newest first."""
+    rows = list_artefacts(ARTEFACT_KIND, limit=limit)
+    return [
+        {
+            "date": r.get("key"),
+            "generated_at": r.get("generated_at"),
+            "report_count": r.get("report_count"),
+            "model": r.get("model"),
+        }
+        for r in rows
+    ]
+
+
+def discard_team_summary(report_date: date_type) -> bool:
+    return delete_artefact(ARTEFACT_KIND, report_date.isoformat())

@@ -32,6 +32,8 @@ CONTAINER_DEFS: dict[str, str] = {
     "divisions": "/company_id",
     "departments": "/division_id",
     "teams": "/department_id",
+    # AI artefacts cached after generation. id == "team-summary:<YYYY-MM-DD>".
+    "ai_artefacts": "/kind",
 }
 
 

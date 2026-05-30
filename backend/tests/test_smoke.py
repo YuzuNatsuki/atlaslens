@@ -94,3 +94,22 @@ def test_chat_style_presets_have_required_keys():
         assert "instructions" in preset
         assert "temperature" in preset
         assert 0 <= preset["temperature"] <= 1
+
+
+def test_artefact_store_round_trip_without_cosmos(monkeypatch):
+    """When Cosmos is not configured, get_artefact returns None and save_artefact
+    returns a body the API can still echo without crashing."""
+    from app.services import artefact_store
+
+    monkeypatch.setattr(artefact_store, "cosmos_configured", lambda: False)
+    assert artefact_store.get_artefact("team-summary", "2026-05-12") is None
+    res = artefact_store.save_artefact(
+        "team-summary",
+        "2026-05-12",
+        {"tldr": ["x"]},
+        extra={"report_count": 1},
+    )
+    assert res["payload"] == {"tldr": ["x"]}
+    assert res["report_count"] == 1
+    assert artefact_store.delete_artefact("team-summary", "2026-05-12") is False
+    assert artefact_store.list_artefacts("team-summary") == []
