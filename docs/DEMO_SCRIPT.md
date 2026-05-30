@@ -1,35 +1,53 @@
 # AtlasLens — デモ動画 脚本 (3分版)
 
 ## 想定視聴者
-Microsoft Agent Hackathon 2026 審査員。EM 業務の文脈を10秒で伝え、Agentic AI の効果を視覚的に示す。
+
+Microsoft Agent Hackathon 2026 審査員。EM 業務の文脈を10秒で伝え、**Agentic AI が自律的にツールを選び、複数エージェントが協調する**様子を視覚的に示す。
 
 ## 全体構成
 
-| 時間 | 画面 | ナレーション | 表示テキスト |
+| 時間 | 画面 | ナレーション | 見せ場 |
 |---|---|---|---|
-| 0:00-0:10 | 黒画面 → AtlasLens ロゴ | "月曜朝。EM の田中さんがチームを見渡す時間です。" | "Mondays. 5 members. Where do you start?" |
-| 0:10-0:30 | Dashboard 画面（チーム一覧 + Team Health） | "AtlasLens は EM のための AI 副操縦士。チーム健康指標を AI が客観的に整理。" | 新人 mem004 のところで "1on1 27 日前" "ブロッカー4件" のフラグを強調 |
-| 0:30-0:50 | mem004 のメンバー詳細をクリック | "新卒の渡辺さん。日報・1on1・参加した議事録が一画面に。AI が直近の動きから ハイライト・リスク・成長サイン を抽出。" | Insights カードをハイライト |
-| 0:50-1:20 | 1on1 準備ボタン → 事前パケット表示 | "1on1 ボタンを押すと AI が事前パケットを30秒で生成。直近のブロッカー、前回 1on1 のフォローアップ、成長を引き出す質問。" | Discussion topics / Growth questions セクションを順にズーム |
-| 1:20-1:50 | 議事録テキストボックスに会話メモを貼る → 整形 | "1on1 中はメモを書くだけ。AI が議事録に整形し、ToDo と担当者を抽出。" | Summary / Decisions / ToDo を順にズーム |
-| 1:50-2:20 | Org Simulator 画面 → "新卒のメンターを mem002 から mem001 に変更" を選択 | "体制変更の影響予測。AI が過去30日の会議参加データから コミュニケーション経路の変化 と 知識リスク を予測。" | Communication impacts + Knowledge risks セクションを順に表示 |
-| 2:20-2:45 | Daily Pulse 画面 → 5/12 を選択 | "Daily Pulse はチーム全員の日報を AI が要約。EM は TL;DR と "サーフェスすべきブロッカー" だけ確認すれば良い。" | TL;DR セクションを表示 |
-| 2:45-3:00 | AtlasLens ロゴ → 締め | "AtlasLens — AI が見続ける。あなたは決められる。" | "AtlasLens. EM Co-pilot powered by Azure AI." |
+| 0:00-0:10 | 黒画面 → 本番 URL ログイン | 「月曜朝。EM の田中さんがチームを見渡す時間です。」 | `tanaka.ken@atlaslens.dev` でログイン |
+| 0:10-0:30 | ダッシュボード（チーム + コンディション） | 「AtlasLens は EM の AI 副操縦士。行動指標だけを客観的に整理します。」 | 渡辺さんの「前回1on1 ○日前」赤強調、高橋さん（大阪）も一言 |
+| 0:30-0:55 | メンバー詳細 → 「AI による状況整理」 | 「日報・OKR・1on1 を横断し、できていること・注意点・成長の兆しを整理。」 | **参照元が日本語ラベル**（例: 「渡辺 翔の日報（5/12）」）であることをズーム |
+| 0:55-1:20 | 1on1 準備（Step 1） | 「1on1 前にパケットを生成。議論ポイントも参照元付き。」 | Step 1 見出し、discussion_topics の evidence 行 |
+| 1:20-1:45 | **チャット** | 「質問に応じて AI がツールを自律選択。複数データを参照してから回答します。」 | 「今、最も注意すべきメンバーは？」→ **「AI が N 件の情報を参照しました」** を開く → Markdown 回答 |
+| 1:45-2:15 | **組織改編シミュレーション** | 「体制変更を Prompt Flow と Critic/Refiner がレビュー。実行中はエージェントの進捗が見えます。」 | プリセット選択 → **SimulatorProgress（Connector〜Refiner の6ステップ）** → 結果 → **Critic 所見を開く** |
+| 2:15-2:35 | 日報サマリー | 「チーム日報を Reporter が要約。参照した件数も表示されます。」 | 「📎 参照データ: N 件の日報…」の行 |
+| 2:35-2:50 | （任意）Foundry Portal / App Insights | 「Foundry Agent Service の thread/run と GenAI スパンがトレースに残ります。」 | Tracing タブのスクショ 1 枚 |
+| 2:50-3:00 | 締め | 「AtlasLens — 見えていないものを、AI が見続ける。」 | ロゴ + 本番 URL |
+
+## 必須デモ質問・操作メモ
+
+### チャット（1:20-1:45）
+
+1. スタイル: `standard` のまま
+2. 送信: 「今、最も注意して見るべきメンバーは誰ですか？」
+3. 折りたたみ **ツール呼び出しトレース** を必ず開く（`find_blockers` + `get_team_health` などが並ぶとベスト）
+4. スタイルを `concise` に切り替え → トースト「簡潔スタイルを選択…」→ 同じ質問を再送し、**文体の差**を 5 秒だけ見せる
+
+### シミュレーター（1:45-2:15）
+
+1. プリセット: 「新卒のメンターを Senior から Tech Lead に変更」
+2. **「影響を確認する」押下直後** — `SimulatorProgress` が出ている間を 5〜8 秒録画（並列分析の見せ場）
+3. 完了後: リスク「中/高」、Critic ブロック（紫）を **open のまま** 表示
+4. `_refined` がある場合は「改善点を検出 → 再生成に反映済み」バッジに言及
 
 ## 撮影のコツ
 
-- 画面録画は OBS Studio + Audacity（マイク）でローカル収録
-- 各セクションの遷移は CMD+CTRL+R などのキーバインドを設定し、画面が静止しないように
-- ナレーションは別撮りして編集で合わせる（しゃべりながら操作するとミスが増える）
-- 字幕は CapCut で日本語 + 英語の二段
-- BGM は YouTube Audio Library から無料素材
-- 1回通しで撮るのではなく、シーンごとに撮り直し可能なように分割収録
+- 画面録画: OBS Studio。ナレーションは別録りでも可
+- **本番 URL 推奨**: https://orange-pond-02df6f200.7.azurestaticapps.net
+- シーンごとに分割収録（チャット失敗時のリテイク用）
+- 字幕: CapCut（日本語 + 英語二段）
 
 ## 撮影前チェックリスト
 
-- [ ] backend が起動済み (`uvicorn app.main:app --port 8000`)
-- [ ] frontend が起動済み (`pnpm dev`)
-- [ ] AtlasCorp seed データが反映されている
-- [ ] AI 応答が安定している (1回 dry-run して確認)
-- [ ] 個人情報が画面に映らないように (Slack 通知 OFF など)
-- [ ] 全シーン分の URL を事前にブックマーク
+- [ ] 本番で EM ログイン成功（`tanaka.ken@atlaslens.dev` / `atlaslens2026`）
+- [ ] メンバー詳細の Insights が 30 秒以内に返る（dry-run 1 回）
+- [ ] チャットでツールトレースが表示される
+- [ ] シミュレーターで Progress UI → 結果まで通る
+- [ ] Slack / 通知 OFF、個人情報が映らないこと
+- [ ] ブックマーク: `/`, `/members/mem004`, `/one-on-ones/mem004`, `/chat`, `/simulator`, `/daily-pulse`
+
+詳細な提出手順は [SUBMISSION_CHECKLIST.md](./SUBMISSION_CHECKLIST.md) を参照。
