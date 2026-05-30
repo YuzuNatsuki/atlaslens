@@ -2,6 +2,7 @@ import { authedFetch } from "@/lib/auth";
 
 export const adminApi = {
   getOrg: () => authedFetch<OrgResponse>("/api/admin/org"),
+  getDashboard: () => authedFetch<AdminDashboard>("/api/admin/dashboard"),
 
   createDivision: (p: DivisionPayload) =>
     authedFetch<{ division: Division }>("/api/admin/divisions", {
@@ -68,6 +69,46 @@ export const adminApi = {
 export interface OrgResponse {
   companies: Company[];
   members: AdminMember[];
+}
+
+export interface AdminDashboard {
+  as_of: string;
+  members: {
+    total: number;
+    by_role: Record<string, number>;
+    admins: number;
+    team_managers: number;
+  };
+  daily_reports: {
+    window_days: number;
+    member_total: number;
+    members_submitted: number;
+    submission_rate: number;
+    total_in_window: number;
+  };
+  one_on_ones: {
+    window_days: number;
+    held_in_window: number;
+    overdue_count: number;
+    overdue_members: Array<{
+      member_id: string;
+      name: string;
+      days_since_last: number | null;
+    }>;
+  };
+  goals: {
+    members_with_goals: number;
+    by_status: Record<string, number>;
+    career_canvas_filled: number;
+  };
+  ai: {
+    artefacts_total: number;
+    recent: Array<{
+      kind: string;
+      key: string;
+      generated_at: string | null;
+    }>;
+  };
 }
 
 export interface Company {

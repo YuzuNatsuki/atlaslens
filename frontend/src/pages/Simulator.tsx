@@ -249,7 +249,7 @@ export default function SimulatorPage() {
 
           <details className="text-xs text-slate-500">
             <summary className="cursor-pointer hover:text-slate-700">
-              詳細パラメータ（任意・JSON）
+              上級者向けの詳細設定（任意）
             </summary>
             <textarea
               value={paramJson}

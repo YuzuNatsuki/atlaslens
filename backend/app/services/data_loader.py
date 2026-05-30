@@ -200,7 +200,10 @@ def _parse_daily_markdown(path: Path, member_id: str) -> DailyReport | None:
         report_date=_to_date(front.get("date") or path.stem),
         yesterday=sections.get("昨日", sections.get("Yesterday", "")).strip(),
         today=sections.get("今日", sections.get("Today", "")).strip(),
-        blockers=sections.get("ブロッカー", sections.get("Blockers", "")).strip(),
+        blockers=sections.get(
+            "進められないこと",
+            sections.get("ブロッカー", sections.get("Blockers", "")),
+        ).strip(),
         mood=front.get("mood"),
     )
 

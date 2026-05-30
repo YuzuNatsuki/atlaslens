@@ -100,16 +100,16 @@ export default function OneOnOnePage() {
 
       <PageHeader
         title={memberName ? `${memberName} との 1on1` : "1on1 準備"}
-        subtitle="Coach エージェントが事前パケットと議事録整形をサポートします。"
+        subtitle="AI が面談前の資料づくりと議事録の整理をサポートします。"
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Step 1 — 事前パケット */}
+        {/* Step 1 — 面談前の資料 */}
         <section>
           <SectionHeader
             icon={<Sparkles size={16} className="text-brand" />}
-            title="Step 1 — 事前パケット"
-            subtitle="OKR / 日報 / 前回 1on1 を横断参照"
+            title="1. 面談前の資料"
+            subtitle="目標・日報・前回の 1on1 をまとめて参照"
             actions={
               <button
                 onClick={() => packetQ.refetch()}
@@ -121,10 +121,10 @@ export default function OneOnOnePage() {
                   className={packetQ.isFetching ? "animate-spin" : ""}
                 />
                 {packetQ.isFetching
-                  ? "生成中… (~10s)"
+                  ? "作成中…（10秒前後）"
                   : packetQ.data
-                    ? "再生成"
-                    : "事前パケットを生成"}
+                    ? "作り直す"
+                    : "面談前の資料を作成"}
               </button>
             }
           />
@@ -137,8 +137,8 @@ export default function OneOnOnePage() {
           {!packetQ.data && !packetQ.isFetching && (
             <EmptyState
               icon={<FileText size={28} />}
-              title="まだ事前パケットは生成されていません"
-              description="「事前パケットを生成」を押すと、Coach エージェントが OKR・日報・前回 1on1 を読み、議論ポイントと質問例を整理します（10 秒前後）。"
+              title="まだ面談前の資料はありません"
+              description="「面談前の資料を作成」を押すと、AI が目標・日報・前回の 1on1 を読み、議論ポイントと質問例を整理します（10 秒前後）。"
             />
           )}
           {packetQ.data && (
@@ -171,7 +171,7 @@ export default function OneOnOnePage() {
                 )}
               />
               <SectionBlock
-                title="拾い上げるべきブロッカー"
+                title="確認したい課題"
                 items={(packetQ.data.packet.blockers_to_surface ?? []).map(
                   (b: any) => ({ primary: pickText(b) }),
                 )}
@@ -187,11 +187,11 @@ export default function OneOnOnePage() {
           )}
         </section>
 
-        {/* Step 2 — 議事録 + 保存 */}
+        {/* 2. 議事録の下書きと保存 */}
         <section>
           <SectionHeader
             icon={<Save size={16} className="text-brand" />}
-            title="Step 2 — 議事録ドラフト + 記録保存"
+            title="2. 議事録の下書きと保存"
             subtitle="生メモから AI が要約・ToDo を抽出します"
           />
           <div className="card">

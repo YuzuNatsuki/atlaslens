@@ -11,13 +11,22 @@ from pydantic import BaseModel, Field
 
 from app.core.auth import AuthContext, get_auth_context, require_admin
 from app.models.schemas import Department, Division, MemberProfile, Role, Team
-from app.services import cosmos_repo, org_repo
+from app.services import admin_dashboard, cosmos_repo, org_repo
 
 router = APIRouter()
 
 
 async def _admin_only(auth: AuthContext = Depends(get_auth_context)) -> AuthContext:
     return await require_admin(auth)
+
+
+# ---------- Dashboard ----------
+
+
+@router.get("/dashboard")
+async def get_dashboard(_: AuthContext = Depends(_admin_only)) -> dict:
+    """Aggregated KPIs (members, daily reports, 1on1, OKR, AI generations)."""
+    return admin_dashboard.compute_dashboard()
 
 
 # ---------- Org tree ----------

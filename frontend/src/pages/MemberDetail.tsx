@@ -4,11 +4,12 @@ import {
   ArrowLeft,
   CalendarCheck,
   ClipboardList,
+  Compass,
   Sparkles,
   Target,
 } from "lucide-react";
 
-import { api, type Insights } from "@/lib/api";
+import { api, type Goal, type Insights } from "@/lib/api";
 import { humanizeEvidenceId, pickEvidence, pickText } from "@/lib/format";
 import {
   EmptyState,
@@ -94,43 +95,16 @@ export default function MemberDetail() {
       <section>
         <SectionHeader
           icon={<Target size={16} className="text-brand" />}
-          title="目標 (OKR)"
+          title="目標 (OKR + キャリアキャンバス)"
+          subtitle="本人が MyGoals で記入した内容を読み取り専用で表示しています"
         />
         {m.goals.length === 0 ? (
           <EmptyState title="目標はまだ設定されていません" />
         ) : (
           <div className="grid gap-3">
-            {m.goals.map((g) => {
-              const status =
-                OKR_STATUS[g.status] ?? { label: g.status, cls: "pill-slate" };
-              return (
-                <div key={g.id} className="card">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
-                    <span className="font-medium text-slate-900">{g.objective}</span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="meta">{g.period}</span>
-                      <span className={status.cls}>{status.label}</span>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-brand rounded-full h-1.5 transition-all"
-                        style={{ width: `${g.progress_pct}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-slate-600 whitespace-nowrap">
-                      {g.progress_pct}%
-                    </span>
-                  </div>
-                  <ul className="mt-3 text-sm text-slate-700 list-disc ml-5 grid gap-0.5">
-                    {g.key_results.map((kr, i) => (
-                      <li key={i}>{kr}</li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
+            {m.goals.map((g) => (
+              <GoalCardEm key={g.id} goal={g} />
+            ))}
           </div>
         )}
       </section>
@@ -157,7 +131,7 @@ export default function MemberDetail() {
               <div key={r.id} className="card">
                 <div className="flex items-baseline justify-between">
                   <span className="font-medium">{r.report_date}</span>
-                  {r.blockers && <span className="pill-rose">ブロッカー</span>}
+                  {r.blockers && <span className="pill-rose">課題あり</span>}
                 </div>
                 <p className="text-sm mt-2">
                   <span className="text-slate-400">昨日: </span>
@@ -169,7 +143,7 @@ export default function MemberDetail() {
                 </p>
                 {r.blockers && (
                   <p className="text-sm text-rose-700">
-                    <span className="text-slate-400">ブロッカー: </span>
+                    <span className="text-slate-400">進められないこと: </span>
                     {r.blockers}
                   </p>
                 )}
@@ -219,6 +193,98 @@ export default function MemberDetail() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function GoalCardEm({ goal }: { goal: Goal }) {
+  const status = OKR_STATUS[goal.status] ?? { label: goal.status, cls: "pill-slate" };
+  const hasCareer =
+    !!goal.career_vision_1y ||
+    !!goal.career_vision_3y ||
+    (goal.skills_to_grow?.length ?? 0) > 0 ||
+    (goal.roles_to_explore?.length ?? 0) > 0 ||
+    !!goal.support_needed;
+  return (
+    <div className="card">
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+        <span className="font-medium text-slate-900">{goal.objective}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="meta">{goal.period}</span>
+          <span className={status.cls}>{status.label}</span>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+          <div
+            className="bg-brand rounded-full h-1.5 transition-all"
+            style={{ width: `${goal.progress_pct}%` }}
+          />
+        </div>
+        <span className="text-xs text-slate-600 whitespace-nowrap">
+          {goal.progress_pct}%
+        </span>
+      </div>
+      {goal.key_results.length > 0 && (
+        <ul className="mt-3 text-sm text-slate-700 list-disc ml-5 grid gap-0.5">
+          {goal.key_results.map((kr, i) => (
+            <li key={i}>{kr}</li>
+          ))}
+        </ul>
+      )}
+
+      {hasCareer && (
+        <div className="mt-4 border-t border-slate-100 pt-3 grid gap-2.5">
+          <p className="eyebrow flex items-center gap-1.5">
+            <Compass size={12} /> キャリアキャンバス
+          </p>
+          {goal.career_vision_1y && (
+            <CanvasRowEm label="1 年後のなりたい姿" value={goal.career_vision_1y} />
+          )}
+          {goal.career_vision_3y && (
+            <CanvasRowEm label="3 年後のなりたい姿" value={goal.career_vision_3y} />
+          )}
+          {(goal.skills_to_grow?.length ?? 0) > 0 && (
+            <div>
+              <p className="label">伸ばしたいスキル</p>
+              <div className="flex flex-wrap gap-1.5">
+                {goal.skills_to_grow!.map((s) => (
+                  <span key={s} className="pill-brand">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {(goal.roles_to_explore?.length ?? 0) > 0 && (
+            <div>
+              <p className="label">挑戦したいロール</p>
+              <div className="flex flex-wrap gap-1.5">
+                {goal.roles_to_explore!.map((s) => (
+                  <span key={s} className="pill-slate">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {goal.support_needed && (
+            <CanvasRowEm
+              label="マネージャー / 周囲に求める支援"
+              value={goal.support_needed}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CanvasRowEm({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="label">{label}</p>
+      <p className="text-sm text-slate-700 whitespace-pre-wrap">{value}</p>
     </div>
   );
 }

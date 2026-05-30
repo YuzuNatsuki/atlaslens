@@ -39,6 +39,21 @@ export const meApi = {
       method: "POST",
       body: JSON.stringify({ notes }),
     }),
+
+  // ---- Skill Growth Summary (AI benefit for members) ----
+  latestGrowthSummary: () =>
+    authedFetch<GrowthSummaryResponse>("/api/me/growth-summary"),
+  generateGrowthSummary: (payload: { window_days?: number; force?: boolean }) =>
+    authedFetch<GrowthSummaryResponse>("/api/me/growth-summary", {
+      method: "POST",
+      body: JSON.stringify(payload ?? {}),
+    }),
+  listGrowthHistory: () =>
+    authedFetch<{ items: GrowthHistoryItem[] }>("/api/me/growth-summary/history"),
+  getGrowthByKey: (key: string) =>
+    authedFetch<GrowthSummaryResponse>(
+      `/api/me/growth-summary/${encodeURIComponent(key)}`,
+    ),
 };
 
 export interface GoalPayload {
@@ -48,6 +63,12 @@ export interface GoalPayload {
   key_results: string[];
   progress_pct: number;
   status: string;
+  // ---- Career canvas (shared common format) ----
+  career_vision_1y?: string | null;
+  career_vision_3y?: string | null;
+  skills_to_grow?: string[];
+  roles_to_explore?: string[];
+  support_needed?: string | null;
 }
 
 export interface MyProfile {
@@ -70,6 +91,48 @@ export interface MyGoal {
   key_results: string[];
   progress_pct: number;
   status: string;
+  career_vision_1y?: string | null;
+  career_vision_3y?: string | null;
+  skills_to_grow?: string[];
+  roles_to_explore?: string[];
+  support_needed?: string | null;
+}
+
+export interface GrowthSummary {
+  tldr?: string;
+  growing?: Array<{
+    area: string;
+    evidence: string;
+    next_step: string;
+  }>;
+  stuck?: Array<{
+    area: string;
+    evidence: string;
+    suggested_action: string;
+  }>;
+  career_alignment?: string;
+  recommended_focus?: string[];
+  // For parser/raw fallback
+  raw?: string;
+  parse_error?: boolean;
+}
+
+export interface GrowthSummaryResponse {
+  member_id: string;
+  key?: string;
+  summary: GrowthSummary | null;
+  generated_at?: string;
+  report_count?: number;
+  window_days?: number;
+  from_cache: boolean;
+}
+
+export interface GrowthHistoryItem {
+  key: string;
+  date: string;
+  generated_at?: string;
+  report_count?: number;
+  window_days?: number;
 }
 
 export interface MyDailyReport {

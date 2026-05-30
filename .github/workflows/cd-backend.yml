@@ -57,23 +57,42 @@ jobs:
             --file backend/Dockerfile \
             .
 
-      - name: Update Container App image
+      - name: Sync GitHub-managed secrets to Container App
+        # JWT_SECRET is required in production (APP_ENV=container). If it's
+        # missing, the new revision fails to boot and traffic stays on the
+        # stale revision. We sync DEMO_PASSWORD here too so demo accounts work.
         run: |
+          SECRET_ARGS=()
+          if [ -n "${{ secrets.JWT_SECRET }}" ]; then
+            SECRET_ARGS+=(jwt-secret="${{ secrets.JWT_SECRET }}")
+          fi
           if [ -n "${{ secrets.DEMO_PASSWORD }}" ]; then
+            SECRET_ARGS+=(demo-password="${{ secrets.DEMO_PASSWORD }}")
+          fi
+          if [ ${#SECRET_ARGS[@]} -gt 0 ]; then
             az containerapp secret set \
               -g "${{ env.RG }}" -n "${{ env.APP }}" \
-              --secrets demo-password="${{ secrets.DEMO_PASSWORD }}"
-
-            az containerapp update \
-              -g "${{ env.RG }}" -n "${{ env.APP }}" \
-              --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
-              --set-env-vars DEMO_PASSWORD=secretref:demo-password
+              --secrets "${SECRET_ARGS[@]}"
           else
-            echo "::warning::DEMO_PASSWORD secret is not set; deploy continues, but fallback demo accounts are disabled."
-            az containerapp update \
-              -g "${{ env.RG }}" -n "${{ env.APP }}" \
-              --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}"
+            echo "::warning::Neither JWT_SECRET nor DEMO_PASSWORD GitHub secret is set; relying on whatever is already on the Container App."
           fi
+
+      - name: Update Container App image + env bindings
+        # --set-env-vars is incremental: it only updates the listed vars and
+        # leaves the rest untouched, so it's safe to list both JWT_SECRET and
+        # DEMO_PASSWORD here even if one of the GitHub secrets is empty.
+        run: |
+          ENV_ARGS=(JWT_SECRET=secretref:jwt-secret DEMO_PASSWORD=secretref:demo-password)
+          if [ -z "${{ secrets.DEMO_PASSWORD }}" ]; then
+            echo "::warning::DEMO_PASSWORD GitHub secret is empty; demo accounts won't work until you set it."
+          fi
+          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+            echo "::warning::JWT_SECRET GitHub secret is empty; relying on the existing Container App secret if any."
+          fi
+          az containerapp update \
+            -g "${{ env.RG }}" -n "${{ env.APP }}" \
+            --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
+            --set-env-vars "${ENV_ARGS[@]}"
 
       - name: Smoke test
         run: |

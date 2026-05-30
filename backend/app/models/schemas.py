@@ -74,15 +74,28 @@ class Team(BaseModel):
 
 
 class Goal(BaseModel):
-    """An OKR or MBO entry tied to a member."""
+    """An OKR-style entry tied to a member.
+
+    The classic OKR fields (objective + key_results + progress + status)
+    live alongside a "career canvas" — free-text fields shared across the
+    team so members can document where they want to head next. The career
+    fields are optional, so existing seed data keeps working unchanged.
+    """
 
     id: str
     member_id: str
     period: str  # e.g. "2026-Q2"
     objective: str
-    key_results: list[str]
+    key_results: list[str] = Field(default_factory=list)
     progress_pct: int = 0
     status: str = "on_track"  # on_track / at_risk / off_track / done
+
+    # ---- career canvas (optional, shared format across the org) ----
+    career_vision_1y: str | None = None
+    career_vision_3y: str | None = None
+    skills_to_grow: list[str] = Field(default_factory=list)
+    roles_to_explore: list[str] = Field(default_factory=list)
+    support_needed: str | None = None  # on_track / at_risk / off_track / done
 
 
 class DailyReport(BaseModel):

@@ -14,6 +14,21 @@ from app.services.daily_report_store import save_daily_report
 from app.services.data_loader import DataLoader
 from app.services.goal_store import delete_goal, list_goals, upsert_goal
 from app.services.prep_notes_store import get_current_prep, save_prep
+from app.services.skill_growth import (
+    DEFAULT_WINDOW_DAYS as GROWTH_DEFAULT_WINDOW,
+)
+from app.services.skill_growth import (
+    generate_summary as generate_skill_growth,
+)
+from app.services.skill_growth import (
+    get_summary_by_key as get_growth_by_key,
+)
+from app.services.skill_growth import (
+    latest_summary as latest_growth_summary_fn,
+)
+from app.services.skill_growth import (
+    list_summaries as list_growth_summaries,
+)
 
 router = APIRouter()
 
@@ -40,6 +55,13 @@ class GoalPayload(BaseModel):
     key_results: list[str] = Field(default_factory=list)
     progress_pct: int = Field(default=0, ge=0, le=100)
     status: str = "on_track"
+    # Optional career canvas fields. Shared common format across the org so
+    # 1on1 / EM can read the same structure across members.
+    career_vision_1y: str | None = None
+    career_vision_3y: str | None = None
+    skills_to_grow: list[str] = Field(default_factory=list)
+    roles_to_explore: list[str] = Field(default_factory=list)
+    support_needed: str | None = None
 
 
 def _make_goal_id(member_id: str, period: str) -> str:
@@ -48,21 +70,32 @@ def _make_goal_id(member_id: str, period: str) -> str:
     return f"g-{member_id}-{period}-{uuid.uuid4().hex[:6]}"
 
 
-@router.post("/goals")
-async def create_goal(
-    payload: GoalPayload,
-    auth: AuthContext = Depends(get_auth_context),
-) -> dict:
-    goal = Goal(
-        id=payload.id or _make_goal_id(auth.member_id, payload.period),
-        member_id=auth.member_id,
+def _goal_from_payload(
+    goal_id: str, member_id: str, payload: GoalPayload
+) -> Goal:
+    return Goal(
+        id=goal_id,
+        member_id=member_id,
         period=payload.period,
         objective=payload.objective,
         key_results=[kr for kr in payload.key_results if kr.strip()],
         progress_pct=payload.progress_pct,
         status=payload.status,
+        career_vision_1y=(payload.career_vision_1y or "").strip() or None,
+        career_vision_3y=(payload.career_vision_3y or "").strip() or None,
+        skills_to_grow=[s.strip() for s in payload.skills_to_grow if s.strip()],
+        roles_to_explore=[s.strip() for s in payload.roles_to_explore if s.strip()],
+        support_needed=(payload.support_needed or "").strip() or None,
     )
-    saved = upsert_goal(auth.member_id, goal)
+
+
+@router.post("/goals")
+async def create_goal(
+    payload: GoalPayload,
+    auth: AuthContext = Depends(get_auth_context),
+) -> dict:
+    goal_id = payload.id or _make_goal_id(auth.member_id, payload.period)
+    saved = upsert_goal(auth.member_id, _goal_from_payload(goal_id, auth.member_id, payload))
     return {"goal": saved.model_dump(mode="json")}
 
 
@@ -72,16 +105,7 @@ async def update_goal(
     payload: GoalPayload,
     auth: AuthContext = Depends(get_auth_context),
 ) -> dict:
-    goal = Goal(
-        id=goal_id,
-        member_id=auth.member_id,
-        period=payload.period,
-        objective=payload.objective,
-        key_results=[kr for kr in payload.key_results if kr.strip()],
-        progress_pct=payload.progress_pct,
-        status=payload.status,
-    )
-    saved = upsert_goal(auth.member_id, goal)
+    saved = upsert_goal(auth.member_id, _goal_from_payload(goal_id, auth.member_id, payload))
     return {"goal": saved.model_dump(mode="json")}
 
 
@@ -178,3 +202,53 @@ async def save_prep_notes(
     auth: AuthContext = Depends(get_auth_context),
 ) -> dict:
     return save_prep(auth.member_id, payload.notes)
+
+
+# ---------- AI: Skill Growth Summary ----------
+
+
+class GrowthGeneratePayload(BaseModel):
+    window_days: int = Field(default=GROWTH_DEFAULT_WINDOW, ge=7, le=120)
+    force: bool = False
+
+
+@router.post("/growth-summary")
+async def generate_growth_summary(
+    payload: GrowthGeneratePayload,
+    auth: AuthContext = Depends(get_auth_context),
+) -> dict:
+    """Generate (or return cached) Skill Growth Summary for the current member."""
+    return await generate_skill_growth(
+        auth.member_id,
+        window_days=payload.window_days,
+        force=payload.force,
+    )
+
+
+@router.get("/growth-summary")
+async def latest_growth_summary(
+    auth: AuthContext = Depends(get_auth_context),
+) -> dict:
+    """Return today's cached summary (without spending tokens)."""
+    cached = latest_growth_summary_fn(auth.member_id)
+    if cached is None:
+        return {"member_id": auth.member_id, "summary": None, "from_cache": False}
+    return cached
+
+
+@router.get("/growth-summary/history")
+async def list_growth_history(
+    auth: AuthContext = Depends(get_auth_context),
+) -> dict:
+    return {"items": list_growth_summaries(auth.member_id)}
+
+
+@router.get("/growth-summary/{key:path}")
+async def get_growth_summary_by_key(
+    key: str,
+    auth: AuthContext = Depends(get_auth_context),
+) -> dict:
+    found = get_growth_by_key(auth.member_id, key)
+    if found is None:
+        raise HTTPException(status_code=404, detail="summary not found")
+    return found

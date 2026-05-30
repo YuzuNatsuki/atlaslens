@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, History, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  Compass,
+  History,
+  RefreshCw,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 import { api, type PastTeamSummary } from "@/lib/api";
 import { pickText } from "@/lib/format";
@@ -61,14 +69,14 @@ export default function DailyPulsePage() {
     <div className="grid gap-8">
       <PageHeader
         title="日報サマリー"
-        subtitle="Reporter エージェントがチーム全員の日報を読み込み、チームの注目点を整理します。生成済みのサマリーは Cosmos DB に保存され、次回以降は即座に再利用されます。"
+        subtitle="AI がチーム全員の日報を読み、朝会前 30 秒で把握できる形に要約します。一度生成すれば次回以降はすぐ再表示できます。"
       />
 
       <section className="card">
         <SectionHeader
           icon={<CalendarDays size={16} className="text-brand" />}
           title="日付を選んでサマリーを表示"
-          subtitle="初回生成は 5〜10 秒、以降はキャッシュから瞬時に返ります"
+          subtitle="初回は 5〜10 秒かかります。一度作った要約はすぐ再表示できます"
         />
         <div className="flex flex-wrap items-end gap-3 mt-2">
           <label className="grid gap-1">
@@ -90,7 +98,7 @@ export default function DailyPulsePage() {
           </button>
           {fromCache && hasResults && !regenerateM.isPending && (
             <span className="pill-emerald" title={summary?.generated_at ?? undefined}>
-              キャッシュから表示中
+              保存済みの要約
               {summary?.generated_at ? ` · ${formatJpDate(summary.generated_at)}` : ""}
             </span>
           )}
@@ -116,23 +124,25 @@ export default function DailyPulsePage() {
           <EmptyState
             icon={<CalendarDays size={28} />}
             title="この日付のサマリーはまだ生成されていません"
-            description="「AI で生成」を押すと Reporter エージェントが日報を読み込みます。"
+            description="「AI で生成」を押すと、日報を読み込んで要約を作ります。"
           />
         )}
-        {regenerateM.isPending && <Spinner label="Reporter エージェントが日報を読み込んでいます…" />}
+        {regenerateM.isPending && <Spinner label="AI が日報を読み込んでいます…" />}
 
         {hasResults && (
           <>
             <p className="meta">
-              📎 参照データ: {summary?.report_count ?? 0} 件の日報（{reportDate}）·{" "}
+              {summary?.report_count ?? 0} 名分の日報（{reportDate}）から作成
               {summary?.generated_at && (
-                <>生成日時 {formatJpDate(summary.generated_at)}</>
+                <> ・ 生成 {formatJpDate(summary.generated_at)}</>
               )}
             </p>
 
             {summary?.summary?.tldr && (
-              <div className="card">
-                <h3 className="font-medium text-sm text-brand-dark mb-2">TL;DR</h3>
+              <div className="card bg-gradient-to-br from-brand/5 to-transparent border-brand/20">
+                <h3 className="section-title text-brand-dark mb-2">
+                  <Sparkles size={16} className="text-brand" /> 今日のひと言サマリー
+                </h3>
                 <ul className="list-disc ml-5 text-sm grid gap-1">
                   {summary.summary.tldr.map((t, i) => (
                     <li key={i}>{t}</li>
@@ -143,11 +153,14 @@ export default function DailyPulsePage() {
 
             {summary?.summary?.highlights && (
               <div className="card">
-                <h3 className="font-medium text-sm text-brand-dark mb-2">メンバーハイライト</h3>
-                <ul className="list-disc ml-5 text-sm grid gap-1">
+                <h3 className="section-title mb-2">
+                  <Users size={16} className="text-brand" /> メンバーごとの動き
+                </h3>
+                <ul className="grid gap-2 text-sm">
                   {Object.entries(summary.summary.highlights).map(([k, v]) => (
-                    <li key={k}>
-                      <strong>{k}</strong>: {pickText(v)}
+                    <li key={k} className="flex gap-2">
+                      <span className="pill-brand shrink-0">{k}</span>
+                      <span className="text-slate-700">{pickText(v)}</span>
                     </li>
                   ))}
                 </ul>
@@ -155,14 +168,16 @@ export default function DailyPulsePage() {
             )}
 
             {summary?.summary?.blockers_to_surface && (
-              <div className="card border-rose-200">
-                <h3 className="font-medium text-sm text-rose-700 mb-2">
-                  サーフェスすべきブロッカー
+              <div className="card border-amber-200 bg-amber-50/40">
+                <h3 className="section-title text-amber-800 mb-2">
+                  <AlertTriangle size={16} className="text-amber-600" />{" "}
+                  EM が今日声をかけたい人
                 </h3>
-                <ul className="list-disc ml-5 text-sm grid gap-1">
+                <ul className="grid gap-2 text-sm">
                   {Object.entries(summary.summary.blockers_to_surface).map(([k, v]) => (
-                    <li key={k}>
-                      <strong>{k}</strong>: {pickText(v)}
+                    <li key={k} className="flex gap-2">
+                      <span className="pill-amber shrink-0">{k}</span>
+                      <span className="text-slate-800">{pickText(v)}</span>
                     </li>
                   ))}
                 </ul>
@@ -171,8 +186,10 @@ export default function DailyPulsePage() {
 
             {summary?.summary?.themes && summary.summary.themes.length > 0 && (
               <div className="card">
-                <h3 className="font-medium text-sm text-slate-600 mb-2">横断テーマ</h3>
-                <ul className="list-disc ml-5 text-sm grid gap-1">
+                <h3 className="section-title mb-2">
+                  <Compass size={16} className="text-brand" /> チーム全体の傾向
+                </h3>
+                <ul className="list-disc ml-5 text-sm grid gap-1 text-slate-700">
                   {summary.summary.themes.map((t, i) => (
                     <li key={i}>{t}</li>
                   ))}
@@ -187,7 +204,7 @@ export default function DailyPulsePage() {
         <SectionHeader
           icon={<History size={16} className="text-brand" />}
           title="過去に生成したサマリー"
-          subtitle="日付をクリックすると即座に表示します（Cosmos DB に永続化）"
+          subtitle="日付をクリックすると、保存済みの要約をすぐ表示します"
         />
         {historyQ.isLoading && <SkeletonCard lines={3} />}
         {!historyQ.isLoading && sortedHistory.length === 0 && (

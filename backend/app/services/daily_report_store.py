@@ -47,7 +47,7 @@ def _save_file(report: DailyReport) -> None:
             "",
             report.today,
             "",
-            "## ブロッカー",
+            "## 進められないこと",
             "",
             report.blockers,
             "",

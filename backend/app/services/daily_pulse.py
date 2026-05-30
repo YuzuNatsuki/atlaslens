@@ -65,10 +65,15 @@ async def summarize_team_day(
     if not force:
         cached = get_artefact(ARTEFACT_KIND, date_key)
         if cached is not None:
+            # Old artefacts may have member_id as keys; rewrite on the fly so
+            # the UI always shows readable names even before a re-generation.
+            members = {m.id: m.name for m in loader.load_profiles()}
             return {
                 "date": date_key,
                 "report_count": cached.get("report_count", len(reports)),
-                "summary": cached["payload"],
+                "summary": _rewrite_member_ids_to_names(
+                    cached["payload"], members
+                ),
                 "generated_at": cached.get("generated_at"),
                 "from_cache": True,
             }
@@ -76,6 +81,9 @@ async def summarize_team_day(
     members = {m.id: m.name for m in loader.load_profiles()}
     payload = [
         {
+            # Hand the name through so the LLM never has to do an ID→name
+            # lookup. We keep the id around for evidence purposes only.
+            "member_name": members.get(r.member_id, r.member_id),
             "member_id": r.member_id,
             "yesterday": r.yesterday,
             "today": r.today,
@@ -84,6 +92,7 @@ async def summarize_team_day(
         for r in reports
     ]
     summary = await summarize_day(payload, members)
+    summary = _rewrite_member_ids_to_names(summary, members)
     saved = save_artefact(
         ARTEFACT_KIND,
         date_key,
@@ -115,3 +124,22 @@ async def list_team_summaries(*, limit: int = 30) -> list[dict]:
 
 def discard_team_summary(report_date: date_type) -> bool:
     return delete_artefact(ARTEFACT_KIND, report_date.isoformat())
+
+
+def _rewrite_member_ids_to_names(
+    summary: dict, members: dict[str, str]
+) -> dict:
+    """If the LLM accidentally returned member_ids as keys, swap them for
+    the human-readable names so the UI always shows '田中 健' not 'mem001'."""
+    if not isinstance(summary, dict):
+        return summary
+    for section in ("highlights", "blockers_to_surface"):
+        body = summary.get(section)
+        if not isinstance(body, dict):
+            continue
+        rewritten: dict[str, object] = {}
+        for key, value in body.items():
+            new_key = members.get(key, key)
+            rewritten[new_key] = value
+        summary[section] = rewritten
+    return summary

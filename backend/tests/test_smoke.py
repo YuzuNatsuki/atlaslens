@@ -61,7 +61,7 @@ def test_tool_definitions_match_handlers():
                 "meetings_attended_last_14d": 5,
                 "days_since_last_one_on_one": 5,
             },
-            "ブロッカー言及",
+            "進められないことの記載",
         ),
         (
             {
@@ -89,7 +89,7 @@ def test_team_health_flags(signals, expected_fact_substr):
 
 
 def test_chat_style_presets_have_required_keys():
-    for key, preset in STYLE_PRESETS.items():
+    for _key, preset in STYLE_PRESETS.items():
         assert "label" in preset
         assert "instructions" in preset
         assert "temperature" in preset
@@ -113,3 +113,51 @@ def test_artefact_store_round_trip_without_cosmos(monkeypatch):
     assert res["report_count"] == 1
     assert artefact_store.delete_artefact("team-summary", "2026-05-12") is False
     assert artefact_store.list_artefacts("team-summary") == []
+
+
+def test_goal_schema_accepts_career_canvas():
+    """The extended Goal schema must accept and preserve career-canvas fields."""
+    from app.models.schemas import Goal
+
+    g = Goal(
+        id="g-test-2026-Q2",
+        member_id="mem-test",
+        period="2026-Q2",
+        objective="自分の OKR",
+        key_results=["KR-1", "KR-2"],
+        progress_pct=40,
+        career_vision_1y="リードエンジニアとして 1 つのサブシステムを任される",
+        career_vision_3y="プロダクト全体のアーキを牽引する",
+        skills_to_grow=["分散システム", "性能設計"],
+        roles_to_explore=["Tech Lead"],
+        support_needed="月1の設計レビュー",
+    )
+    body = g.model_dump(mode="json")
+    assert body["career_vision_1y"].startswith("リードエンジニア")
+    assert body["skills_to_grow"] == ["分散システム", "性能設計"]
+    assert Goal.model_validate(body).roles_to_explore == ["Tech Lead"]
+
+
+def test_goal_schema_backwards_compatible():
+    """Old goal payloads without career fields must still validate."""
+    from app.models.schemas import Goal
+
+    g = Goal(
+        id="g-old",
+        member_id="mem-old",
+        period="2026-Q1",
+        objective="既存目標",
+        key_results=["A"],
+    )
+    assert g.career_vision_1y is None
+    assert g.skills_to_grow == []
+
+
+def test_admin_dashboard_unauthorized():
+    res = client.get("/api/admin/dashboard")
+    assert res.status_code == 401
+
+
+def test_growth_summary_unauthorized():
+    res = client.post("/api/me/growth-summary", json={})
+    assert res.status_code == 401

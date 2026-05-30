@@ -131,7 +131,7 @@ export default function MyDaily() {
                 style={{ minHeight: 80 }}
               />
             </Section>
-            <Section title="ブロッカー">
+            <Section title="進められないこと">
               <textarea
                 value={blockers}
                 onChange={(e) => setBlockers(e.target.value)}
@@ -188,7 +188,7 @@ export default function MyDaily() {
                   <div className="flex items-baseline justify-between">
                     <span className="font-medium text-sm">{r.report_date}</span>
                     {r.blockers && (
-                      <span className="pill-rose">ブロッカー</span>
+                      <span className="pill-rose">課題あり</span>
                     )}
                   </div>
                   <p className="meta mt-1 line-clamp-2">{r.today}</p>

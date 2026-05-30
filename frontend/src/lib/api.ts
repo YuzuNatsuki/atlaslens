@@ -95,6 +95,11 @@ export interface Goal {
   key_results: string[];
   progress_pct: number;
   status: string;
+  career_vision_1y?: string | null;
+  career_vision_3y?: string | null;
+  skills_to_grow?: string[];
+  roles_to_explore?: string[];
+  support_needed?: string | null;
 }
 
 export interface DailyReport {

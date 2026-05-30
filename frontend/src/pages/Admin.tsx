@@ -1,6 +1,20 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, Key, Pencil, Plus, Trash2, Users } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  BarChart3,
+  Building2,
+  CalendarDays,
+  Key,
+  MessageSquare,
+  Pencil,
+  Plus,
+  Sparkles,
+  Target,
+  Trash2,
+  Users,
+} from "lucide-react";
 
 import {
   adminApi,
@@ -10,20 +24,27 @@ import {
   type MemberPayload,
   type Team,
 } from "@/lib/adminApi";
-import { PageHeader } from "@/components/ui";
+import { EmptyState, PageHeader, SkeletonCard, formatJpDate } from "@/components/ui";
 
-type Tab = "org" | "members";
+type Tab = "dashboard" | "org" | "members";
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<Tab>("org");
+  const [tab, setTab] = useState<Tab>("dashboard");
 
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="アカウント / 組織管理"
-        subtitle="Admin だけがアクセスできるページです。組織階層とメンバー全件をここで CRUD します。"
+        title="管理ダッシュボード / 組織"
+        subtitle="Admin だけがアクセスできるページです。チーム全体の KPI と、組織階層・メンバーの CRUD を扱います。"
       />
-      <nav className="flex gap-2">
+      <nav className="flex gap-2 flex-wrap">
+        <TabButton
+          active={tab === "dashboard"}
+          onClick={() => setTab("dashboard")}
+          icon={<BarChart3 size={14} />}
+        >
+          ダッシュボード
+        </TabButton>
         <TabButton
           active={tab === "org"}
           onClick={() => setTab("org")}
@@ -39,8 +60,300 @@ export default function AdminPage() {
           メンバー
         </TabButton>
       </nav>
-      {tab === "org" ? <OrgPanel /> : <MembersPanel />}
+      {tab === "dashboard" && <DashboardPanel />}
+      {tab === "org" && <OrgPanel />}
+      {tab === "members" && <MembersPanel />}
     </div>
+  );
+}
+
+// ============================================================
+// Dashboard
+// ============================================================
+
+const ROLE_LABEL: Record<string, string> = {
+  em: "EM",
+  tech_lead: "テックリード",
+  senior: "シニア",
+  mid: "ミドル",
+  junior: "ジュニア",
+  admin: "Admin",
+};
+
+const GOAL_STATUS_LABEL: Record<string, string> = {
+  on_track: "順調",
+  at_risk: "注意",
+  off_track: "遅延",
+  done: "完了",
+};
+
+const GOAL_STATUS_TONE: Record<string, string> = {
+  on_track: "pill-emerald",
+  at_risk: "pill-amber",
+  off_track: "pill-rose",
+  done: "pill-slate",
+};
+
+const ARTEFACT_KIND_LABEL: Record<string, string> = {
+  "team-summary": "日報サマリー",
+  "skill-growth": "スキル成長サマリー",
+};
+
+function DashboardPanel() {
+  const dashQ = useQuery({
+    queryKey: ["admin", "dashboard"],
+    queryFn: adminApi.getDashboard,
+    refetchOnWindowFocus: false,
+  });
+
+  if (dashQ.isLoading) {
+    return (
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkeletonCard key={i} lines={2} />
+        ))}
+      </div>
+    );
+  }
+
+  if (dashQ.isError || !dashQ.data) {
+    return (
+      <div className="card border-rose-200 bg-rose-50 text-rose-700 text-sm">
+        集計の取得に失敗しました。再読み込みしてください。
+      </div>
+    );
+  }
+
+  const d = dashQ.data;
+  const submissionPct = Math.round(d.daily_reports.submission_rate * 100);
+
+  return (
+    <div className="grid gap-5">
+      <p className="meta">基準日: {d.as_of}</p>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard
+          icon={<Users size={16} className="text-brand" />}
+          label="メンバー総数"
+          primary={String(d.members.total)}
+          sub={
+            <span>
+              Admin {d.members.admins} ・ チーム管理者{" "}
+              {d.members.team_managers}
+            </span>
+          }
+        />
+        <KpiCard
+          icon={<CalendarDays size={16} className="text-brand" />}
+          label={`日報提出率 (直近${d.daily_reports.window_days}日)`}
+          primary={`${submissionPct}%`}
+          sub={
+            <span>
+              {d.daily_reports.members_submitted} / {d.daily_reports.member_total}{" "}
+              名が提出 ・ 合計 {d.daily_reports.total_in_window} 件
+            </span>
+          }
+          tone={submissionPct < 60 ? "rose" : submissionPct < 80 ? "amber" : "emerald"}
+        />
+        <KpiCard
+          icon={<MessageSquare size={16} className="text-brand" />}
+          label={`1on1 実施 (直近${d.one_on_ones.window_days}日)`}
+          primary={String(d.one_on_ones.held_in_window)}
+          sub={
+            <span>
+              要対応:{" "}
+              <span
+                className={
+                  d.one_on_ones.overdue_count > 0
+                    ? "text-rose-700 font-medium"
+                    : "text-emerald-700 font-medium"
+                }
+              >
+                {d.one_on_ones.overdue_count} 名
+              </span>
+            </span>
+          }
+          tone={d.one_on_ones.overdue_count > 0 ? "amber" : "emerald"}
+        />
+        <KpiCard
+          icon={<Sparkles size={16} className="text-brand" />}
+          label="AI 生成アーティファクト"
+          primary={String(d.ai.artefacts_total)}
+          sub={<span>日報要約 + スキル成長サマリーの累計</span>}
+        />
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-3">
+        <section className="card">
+          <header className="flex items-center justify-between mb-3">
+            <h2 className="section-title">
+              <Activity size={16} className="text-brand" />
+              ロール構成
+            </h2>
+          </header>
+          {Object.keys(d.members.by_role).length === 0 ? (
+            <EmptyState title="メンバーが登録されていません" />
+          ) : (
+            <ul className="grid gap-1.5 text-sm">
+              {Object.entries(d.members.by_role)
+                .sort(([, a], [, b]) => b - a)
+                .map(([role, count]) => (
+                  <li
+                    key={role}
+                    className="flex items-center justify-between border-b border-slate-100 last:border-0 py-1"
+                  >
+                    <span className="text-slate-700">
+                      {ROLE_LABEL[role] ?? role}
+                    </span>
+                    <span className="font-mono text-slate-900">{count}</span>
+                  </li>
+                ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="card">
+          <header className="flex items-center justify-between mb-3">
+            <h2 className="section-title">
+              <Target size={16} className="text-brand" />
+              OKR ステータス
+            </h2>
+            <span className="meta">
+              目標を持つメンバー: {d.goals.members_with_goals} 名
+            </span>
+          </header>
+          {Object.keys(d.goals.by_status).length === 0 ? (
+            <EmptyState
+              title="集計対象の目標がありません"
+              description="メンバーが MyGoals から目標を登録すると、ここに集計が表示されます。"
+            />
+          ) : (
+            <ul className="grid gap-1.5 text-sm">
+              {Object.entries(d.goals.by_status)
+                .sort(([, a], [, b]) => b - a)
+                .map(([status, count]) => (
+                  <li
+                    key={status}
+                    className="flex items-center justify-between border-b border-slate-100 last:border-0 py-1"
+                  >
+                    <span className={GOAL_STATUS_TONE[status] ?? "pill-slate"}>
+                      {GOAL_STATUS_LABEL[status] ?? status}
+                    </span>
+                    <span className="font-mono text-slate-900">{count}</span>
+                  </li>
+                ))}
+            </ul>
+          )}
+          <p className="meta mt-3">
+            キャリアキャンバス記入済み:{" "}
+            <span className="font-medium text-slate-700">
+              {d.goals.career_canvas_filled} 件
+            </span>
+          </p>
+        </section>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-3">
+        <section className="card">
+          <header className="flex items-center justify-between mb-3">
+            <h2 className="section-title">
+              <AlertCircle size={16} className="text-amber-600" />
+              1on1 要フォロー
+            </h2>
+          </header>
+          {d.one_on_ones.overdue_members.length === 0 ? (
+            <p className="text-sm text-emerald-700">
+              全員の 1on1 は {d.one_on_ones.window_days} 日以内に実施されています。
+            </p>
+          ) : (
+            <ul className="grid gap-1.5 text-sm">
+              {d.one_on_ones.overdue_members.map((m) => (
+                <li
+                  key={m.member_id}
+                  className="flex items-center justify-between border-b border-slate-100 last:border-0 py-1"
+                >
+                  <span className="text-slate-800">{m.name}</span>
+                  <span className="text-xs text-rose-700 font-medium">
+                    {m.days_since_last === null
+                      ? "未実施"
+                      : `${m.days_since_last}日経過`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="card">
+          <header className="flex items-center justify-between mb-3">
+            <h2 className="section-title">
+              <Sparkles size={16} className="text-brand" />
+              直近の AI 生成
+            </h2>
+          </header>
+          {d.ai.recent.length === 0 ? (
+            <EmptyState
+              title="まだ AI 生成履歴がありません"
+              description="EM が日報サマリーを生成すると、ここに表示されます。"
+            />
+          ) : (
+            <ul className="grid gap-1.5 text-sm">
+              {d.ai.recent.map((r) => (
+                <li
+                  key={`${r.kind}:${r.key}`}
+                  className="flex items-center justify-between gap-2 border-b border-slate-100 last:border-0 py-1"
+                >
+                  <span className="min-w-0 truncate">
+                    <span className="pill-brand mr-1.5">
+                      {ARTEFACT_KIND_LABEL[r.kind] ?? r.kind}
+                    </span>
+                    <span className="text-slate-700">{r.key}</span>
+                  </span>
+                  <span className="text-xs text-slate-500 shrink-0">
+                    {formatJpDate(r.generated_at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function KpiCard({
+  icon,
+  label,
+  primary,
+  sub,
+  tone,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  primary: string;
+  sub?: React.ReactNode;
+  tone?: "rose" | "amber" | "emerald";
+}) {
+  const ring =
+    tone === "rose"
+      ? "border-rose-200"
+      : tone === "amber"
+      ? "border-amber-200"
+      : tone === "emerald"
+      ? "border-emerald-200"
+      : "";
+  return (
+    <article className={`card card-hover ${ring}`}>
+      <p className="eyebrow flex items-center gap-1.5">
+        {icon}
+        {label}
+      </p>
+      <p className="text-2xl font-semibold tracking-tight text-slate-900 mt-2">
+        {primary}
+      </p>
+      {sub && <p className="meta mt-1">{sub}</p>}
+    </article>
   );
 }
 

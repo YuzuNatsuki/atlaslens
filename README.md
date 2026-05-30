@@ -62,11 +62,14 @@ atlaslens-tfstate-rg @ japaneast
 エンジニアリングマネージャー（EM）の業務を 5 つのモジュールで支援する Agentic AI プラットフォーム。
 
 - **M1. Member 360** — メンバー全方位ビュー
-- **M2. Daily Pulse** — 日報 AI（下書き生成 + チーム要約）
-- **M3. 1on1 Companion** — 事前パケット + 自動議事録 + ToDo tracking
+- **M2. Daily Pulse** — 日報 AI（下書き生成 + チーム要約、Cosmos 永続化）
+- **M3. 1on1 Companion** — 面談前の資料 + 議事録の下書き + ToDo 管理
 - **M4. Goal Alignment Coach** — OKR と日々の活動の整合性
 - **M5. Org Impact Simulator** — 体制変更の影響予測
 - **M6. Team Health Sensor**（倫理配慮版）— 行動指標による予兆検知
+- **M7. Admin Dashboard**（管理者専用）— メンバー数 / 日報提出率 / 1on1 状況 / OKR 進捗 / AI 生成数の KPI 集計
+- **M8. Career Canvas**（メンバー側）— OKR と同じフォーマットで「1〜3年後の理想像 / 伸ばしたいスキル / 挑戦したいロール / 必要な支援」を記録
+- **M9. 成長サマリー**（メンバー側）— 直近 30 日の自分の日報 + 目標から、AI が「伸びている領域 / 伸び悩む領域 / 次の一歩」を抽出（履歴をクラウドに保存）
 
 ## アーキテクチャ
 

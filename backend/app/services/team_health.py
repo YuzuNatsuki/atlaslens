@@ -54,7 +54,7 @@ def _flag_facts(signals: dict) -> list[str]:
         )
     if signals["blockers_mentioned_last_14d"] >= 4:
         facts.append(
-            f"ブロッカー言及が{signals['blockers_mentioned_last_14d']}件 — 1on1で深掘り推奨"
+            f"進められないことの記載が{signals['blockers_mentioned_last_14d']}件 — 1on1で深掘り推奨"
         )
     if signals["meetings_attended_last_14d"] >= 25:
         facts.append(

@@ -8,7 +8,7 @@ from app.core.azure_clients import chat_complete
 
 COACH_SYSTEM_PROMPT = """\
 あなたは AtlasLens の "Coach" です。日本のチームの 1on1 を支援するアシスタント
-として、EM がメンバーと面談する前のパケットを作ります。
+として、EM がメンバーと面談する前の準備資料を作ります。
 
 以下の JSON 形式で返してください。キーと構造は厳密に守り、人間向け文字列は
 自然な日本語の敬体で書きます。メンバーは「○○さん」と呼びます。

@@ -42,7 +42,7 @@ export default function MyOneOnOnes() {
         <SectionHeader
           icon={<NotebookPen size={16} className="text-brand" />}
           title="次回 1on1 で話したいこと"
-          subtitle="このメモは EM の事前パケットに反映されます。いつでも更新できます。"
+          subtitle="このメモは EM の面談前の資料に反映されます。いつでも更新できます。"
         />
         <textarea
           value={notes}
