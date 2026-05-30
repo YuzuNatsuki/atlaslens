@@ -41,7 +41,6 @@ _RULES: list[tuple[re.Pattern[str], str, str]] = [
     (re.compile(r"^/api/me/growth-summary"), ACTION_AI_GENERATE, "growth-summary"),
     (re.compile(r"^/api/simulator/.*"), ACTION_AI_GENERATE, "org-simulator"),
     (re.compile(r"^/api/one-on-ones/.*"), ACTION_VIEW, "one-on-one"),
-    (re.compile(r"^/api/insight-actions(/.*)?$"), ACTION_MUTATE, "insight-action"),
 ]
 
 
@@ -70,7 +69,7 @@ def _target_id_from_path(path: str) -> str | None:
     """Best-effort extraction of an entity id (mem001, em001, gXX, …)."""
     parts = [p for p in path.split("/") if p]
     for i, p in enumerate(parts):
-        if p in {"members", "me", "goals", "one-on-ones", "insight-actions"} and i + 1 < len(parts):
+        if p in {"members", "me", "goals", "one-on-ones"} and i + 1 < len(parts):
             next_part = parts[i + 1]
             if next_part not in {"insights", "growth-summary", "history", "draft-minutes", "records", "packet"}:
                 return next_part

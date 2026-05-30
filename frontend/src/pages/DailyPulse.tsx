@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   CalendarDays,
   CalendarRange,
-  CheckSquare,
   Compass,
   History,
   Lightbulb,
@@ -566,11 +565,7 @@ function RangeResult({ summary }: { summary: TeamRangeSummary }) {
           </h3>
           <ul className="grid gap-2.5">
             {s.risk_signals.map((r, i) => (
-              <RiskSignalItem
-                key={i}
-                signal={r}
-                sourceKey={`${summary.start_date}_${summary.end_date}`}
-              />
+              <RiskSignalItem key={i} signal={r} />
             ))}
           </ul>
         </div>
@@ -618,35 +613,12 @@ function RangeResult({ summary }: { summary: TeamRangeSummary }) {
   );
 }
 
-function RiskSignalItem({
-  signal,
-  sourceKey,
-}: {
-  signal: RangeRiskSignal;
-  sourceKey: string;
-}) {
+function RiskSignalItem({ signal }: { signal: RangeRiskSignal }) {
   const meta = RISK_KIND_META[signal.kind ?? ""] ?? {
     label: signal.kind ?? "シグナル",
     emoji: "•",
     cls: "bg-slate-100 text-slate-700 border-slate-200",
   };
-  const qc = useQueryClient();
-  const createM = useMutation({
-    mutationFn: () =>
-      api.createInsightAction({
-        title:
-          signal.summary?.slice(0, 80) ||
-          `${meta.label}: ${signal.member_name ?? "メンバー"}`,
-        source_kind: "team-summary-range",
-        source_key: sourceKey,
-        signal_kind: signal.kind || undefined,
-        member_id: signal.member_name || undefined,
-        evidence_dates: signal.evidence_dates || [],
-        details: signal.summary || "",
-        initial_note: "期間サマリーから追跡開始",
-      }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["insight-actions"] }),
-  });
   return (
     <li className="rounded-lg border border-rose-200 bg-white p-3">
       <div className="flex flex-wrap items-baseline gap-2 mb-1">
@@ -665,19 +637,6 @@ function RiskSignalItem({
             根拠日: {signal.evidence_dates.join(", ")}
           </span>
         )}
-        <button
-          onClick={() => createM.mutate()}
-          disabled={createM.isPending || createM.isSuccess}
-          className="ml-auto inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-rose-300 text-rose-700 bg-white hover:bg-rose-50 disabled:opacity-60"
-          title="フォローアップ画面で PDCA を回します"
-        >
-          <CheckSquare size={11} />
-          {createM.isSuccess
-            ? "追跡を作成しました"
-            : createM.isPending
-              ? "登録中…"
-              : "アクションを追跡"}
-        </button>
       </div>
       {signal.summary && (
         <p className="text-sm text-slate-800">{signal.summary}</p>

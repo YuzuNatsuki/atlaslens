@@ -76,27 +76,6 @@ export const api = {
     authedFetch<AgentMemory>(`/api/me/memory/focus/${member_id}`, {
       method: "DELETE",
     }),
-
-  // ---- insight actions (PDCA tracker) ----
-  listInsightActions: (filters?: { status?: string; member_id?: string }) => {
-    const q = new URLSearchParams();
-    if (filters?.status) q.set("status", filters.status);
-    if (filters?.member_id) q.set("member_id", filters.member_id);
-    const qs = q.toString();
-    return authedFetch<{ actions: InsightAction[]; count: number }>(
-      `/api/insight-actions${qs ? `?${qs}` : ""}`,
-    );
-  },
-  createInsightAction: (payload: CreateInsightActionPayload) =>
-    authedFetch<InsightAction>("/api/insight-actions", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-  updateInsightAction: (id: string, payload: UpdateInsightActionPayload) =>
-    authedFetch<InsightAction>(`/api/insight-actions/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-    }),
 };
 
 export interface AgentMemory {
@@ -105,54 +84,6 @@ export interface AgentMemory {
   recent_topics: Array<{ topic: string; at: string }>;
   preferences: Record<string, unknown>;
   updated_at?: string | null;
-}
-
-export type InsightActionStatus =
-  | "open"
-  | "in_progress"
-  | "resolved"
-  | "wont_fix";
-
-export interface InsightActionHistoryEntry {
-  at: string;
-  by: string;
-  status: InsightActionStatus;
-  note?: string;
-}
-
-export interface InsightAction {
-  id: string;
-  status: InsightActionStatus;
-  title: string;
-  source_kind?: string | null;
-  source_key?: string | null;
-  signal_id?: string | null;
-  signal_kind?: string | null;
-  member_id?: string | null;
-  evidence_dates?: string[];
-  details?: string;
-  history: InsightActionHistoryEntry[];
-  created_at?: string | null;
-  created_by?: string | null;
-  updated_at?: string | null;
-}
-
-export interface CreateInsightActionPayload {
-  title: string;
-  source_kind?: string;
-  source_key?: string;
-  signal_id?: string;
-  signal_kind?: string;
-  member_id?: string;
-  evidence_dates?: string[];
-  details?: string;
-  initial_note?: string;
-}
-
-export interface UpdateInsightActionPayload {
-  status?: InsightActionStatus;
-  note?: string;
-  details?: string;
 }
 
 export interface ChatHistory {
