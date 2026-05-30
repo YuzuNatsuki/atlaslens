@@ -17,7 +17,7 @@ ENV PNPM_HOME=/usr/local/pnpm \
     PATH=/usr/local/pnpm:$PATH \
     CI=true
 
-RUN corepack enable && corepack prepare pnpm@11.1.1 --activate
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile=false
@@ -28,7 +28,7 @@ COPY frontend/ ./
 # forwards /api/* server-side).
 ENV VITE_API_BASE=""
 
-RUN pnpm build
+RUN pnpm run build
 
 # ---------- runtime ----------
 FROM nginx:1.27-alpine AS runtime
