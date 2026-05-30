@@ -52,6 +52,7 @@ jobs:
           echo "login=$LOGIN"         >> "$GITHUB_OUTPUT"
           echo "tag=$TAG"             >> "$GITHUB_OUTPUT"
           echo "backend=https://$BACKEND_FQDN" >> "$GITHUB_OUTPUT"
+          echo "backend_host=$BACKEND_FQDN" >> "$GITHUB_OUTPUT"
 
       - name: Build + push frontend image via ACR Tasks
         run: |
@@ -80,7 +81,7 @@ jobs:
               --registry-server "${{ steps.vars.outputs.login }}" \
               --registry-username "${{ steps.vars.outputs.acr }}" \
               --registry-password "$REGISTRY_PASSWORD" \
-              --env-vars BACKEND_URL=${{ steps.vars.outputs.backend }} PORT=8080 \
+              --env-vars BACKEND_URL=${{ steps.vars.outputs.backend }} BACKEND_HOST=${{ steps.vars.outputs.backend_host }} PORT=8080 \
               --min-replicas 0 \
               --max-replicas 2
           fi
@@ -90,7 +91,7 @@ jobs:
           az containerapp update \
             -g "${{ env.RG }}" -n "${{ env.FRONTEND_APP }}" \
             --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
-            --set-env-vars BACKEND_URL=${{ steps.vars.outputs.backend }} PORT=8080
+            --set-env-vars BACKEND_URL=${{ steps.vars.outputs.backend }} BACKEND_HOST=${{ steps.vars.outputs.backend_host }} PORT=8080
 
       - name: Smoke test
         run: |

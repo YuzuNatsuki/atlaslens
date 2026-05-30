@@ -136,6 +136,7 @@ module "frontend_container_app" {
   container_app_environment_id = module.container_app.environment_id
   image_tag                    = var.frontend_image_tag
   backend_url                  = module.container_app.backend_url
+  backend_host                 = module.container_app.fqdn
 
   registry_login_server = module.acr.login_server
   registry_username     = module.acr.admin_username

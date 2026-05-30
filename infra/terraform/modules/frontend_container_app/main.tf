@@ -4,6 +4,7 @@ variable "resource_group_name" { type = string }
 variable "container_app_environment_id" { type = string }
 variable "image_tag" { type = string }
 variable "backend_url" { type = string }
+variable "backend_host" { type = string }
 
 variable "registry_login_server" { type = string }
 variable "registry_username" { type = string }
@@ -60,6 +61,10 @@ resource "azurerm_container_app" "frontend" {
       env {
         name  = "BACKEND_URL"
         value = var.backend_url
+      }
+      env {
+        name  = "BACKEND_HOST"
+        value = var.backend_host
       }
       env {
         name  = "PORT"
