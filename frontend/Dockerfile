@@ -17,7 +17,7 @@ ENV PNPM_HOME=/usr/local/pnpm \
     PATH=/usr/local/pnpm:$PATH \
     CI=true
 
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@11.1.1 --activate
 
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile=false

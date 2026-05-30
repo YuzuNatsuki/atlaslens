@@ -59,14 +59,21 @@ jobs:
 
       - name: Update Container App image
         run: |
-          az containerapp secret set \
-            -g "${{ env.RG }}" -n "${{ env.APP }}" \
-            --secrets demo-password="${{ secrets.DEMO_PASSWORD }}"
+          if [ -n "${{ secrets.DEMO_PASSWORD }}" ]; then
+            az containerapp secret set \
+              -g "${{ env.RG }}" -n "${{ env.APP }}" \
+              --secrets demo-password="${{ secrets.DEMO_PASSWORD }}"
 
-          az containerapp update \
-            -g "${{ env.RG }}" -n "${{ env.APP }}" \
-            --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
-            --set-env-vars DEMO_PASSWORD=secretref:demo-password
+            az containerapp update \
+              -g "${{ env.RG }}" -n "${{ env.APP }}" \
+              --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}" \
+              --set-env-vars DEMO_PASSWORD=secretref:demo-password
+          else
+            echo "::warning::DEMO_PASSWORD secret is not set; deploy continues, but fallback demo accounts are disabled."
+            az containerapp update \
+              -g "${{ env.RG }}" -n "${{ env.APP }}" \
+              --image "${{ steps.vars.outputs.login }}/${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}"
+          fi
 
       - name: Smoke test
         run: |

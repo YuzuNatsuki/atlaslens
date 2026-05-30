@@ -22,7 +22,7 @@ Partition key is `/kind` so artefacts of the same type are co-located.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.cosmos_client import cosmos_configured, get_container
@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _doc_id(kind: str, key: str) -> str:

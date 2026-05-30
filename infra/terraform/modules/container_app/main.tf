@@ -90,9 +90,12 @@ resource "azurerm_container_app" "backend" {
     name  = "jwt-secret"
     value = var.jwt_secret
   }
-  secret {
-    name  = "demo-password"
-    value = var.demo_password
+  dynamic "secret" {
+    for_each = var.demo_password == "" ? [] : [var.demo_password]
+    content {
+      name  = "demo-password"
+      value = secret.value
+    }
   }
 
   ingress {
@@ -159,9 +162,12 @@ resource "azurerm_container_app" "backend" {
         name        = "JWT_SECRET"
         secret_name = "jwt-secret"
       }
-      env {
-        name        = "DEMO_PASSWORD"
-        secret_name = "demo-password"
+      dynamic "env" {
+        for_each = var.demo_password == "" ? [] : [1]
+        content {
+          name        = "DEMO_PASSWORD"
+          secret_name = "demo-password"
+        }
       }
       env {
         name  = "APP_ENV"
